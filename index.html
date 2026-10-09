@@ -1,0 +1,882 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ink Calendar</title>
+<meta name="description" content="A month calendar with the dates printed, for writing with a tablet pen. Works offline.">
+<meta name="theme-color" content="#eceef2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11141a" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 400 800; font-display: swap; src: url("fonts/bricolage-grotesque.woff2") format("woff2"); }
+@font-face { font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap; src: url("fonts/figtree.woff2") format("woff2"); }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+/* Layout: one working screen — month header, a tool strip, and a paper-like month grid sized to fit the viewport for pen writing. */
+:root {
+  --bg: #eceef2;
+  --surface: #ffffff;
+  --surface-2: #f3f4f7;
+  --line: #d8dbe3;
+  --text: #1b1f2a;
+  --muted: #646b7c;
+  --accent: #2449d8;
+  --accent-soft: #e2e8ff;
+  --sun: #cf2f3d;
+  --danger: #c8283a;
+  --shadow: 0 1px 2px rgba(20, 28, 60, .06), 0 10px 30px rgba(20, 28, 60, .08);
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --font-body: "Figtree", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11141a; --surface: #1b1f29; --surface-2: #232834; --line: #313848;
+    --text: #e8ebf2; --muted: #9aa2b5; --accent: #8ea6ff; --accent-soft: #252f55;
+    --sun: #ff7d86; --danger: #ff7d86;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11141a; --surface: #1b1f29; --surface-2: #232834; --line: #313848;
+  --text: #e8ebf2; --muted: #9aa2b5; --accent: #8ea6ff; --accent-soft: #252f55;
+  --sun: #ff7d86; --danger: #ff7d86;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--text); }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
+.app { max-width: 1500px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.nav { display: flex; gap: 4px; }
+.iconbtn { width: 40px; height: 40px; display: inline-grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); }
+.iconbtn:hover { background: var(--surface-2); }
+.iconbtn svg { width: 20px; height: 20px; }
+.month { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(28px, 4vw, 44px); letter-spacing: -0.02em; line-height: 1; text-wrap: balance; }
+.month .yr { font-weight: 400; color: var(--muted); margin-left: .25em; font-variant-numeric: tabular-nums; }
+.pill { height: 36px; padding-inline: 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+.pill:hover { background: var(--surface-2); }
+.spacer { flex: 1; }
+.status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.status[data-s="saved"] i { background: #2e9e5b; }
+.status[data-s="saving"] i { background: var(--accent); }
+.status[data-s="error"] i, .status[data-s="memory"] i { background: var(--danger); }
+.status[data-s="local"] i { background: #d39a12; }
+.menuwrap { position: relative; }
+.btn { height: 40px; padding-inline: 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
+.btn:hover { background: var(--surface-2); }
+.btn svg { width: 18px; height: 18px; }
+
+/* Tool strip */
+.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.group { display: flex; align-items: center; gap: 4px; }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin-inline: 2px; }
+.tool { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; border: 1px solid transparent; background: transparent; }
+.tool:hover { background: var(--surface-2); }
+.tool[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.tool svg { width: 22px; height: 22px; }
+.tool:disabled { opacity: .35; cursor: default; background: transparent; }
+.sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 0; }
+.sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+.size { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; border: 1px solid transparent; background: transparent; }
+.size:hover { background: var(--surface-2); }
+.size[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.size b { display: block; border-radius: 50%; background: var(--text); }
+.toggle { height: 40px; padding-inline: 12px; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-weight: 500; font-size: 14px; }
+.toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.toggle svg { width: 18px; height: 18px; }
+.danger-text { color: var(--danger); }
+
+/* Board */
+.boardwrap { width: 100%; display: flex; justify-content: center; }
+.board { position: relative; border-radius: 6px; box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; max-width: 100%; }
+.board canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 6px; touch-action: none; }
+.board .loading { position: absolute; inset: auto 12px 12px auto; font-size: 12px; color: var(--muted); background: var(--surface); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); pointer-events: none; }
+.hint { font-size: 13px; color: var(--muted); text-align: center; }
+
+/* Popovers */
+.pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: min(330px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+.pop h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 7px 12px; font-size: 13px; font-weight: 500; }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+.menuitem { text-align: left; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.menuitem:hover { border-color: var(--accent); }
+.menuitem strong { font-weight: 600; font-size: 14px; }
+.menuitem span { font-size: 12.5px; color: var(--muted); }
+.menuitem:disabled { opacity: .5; cursor: progress; }
+.confirm { display: flex; gap: 8px; justify-content: flex-end; }
+.btn.red { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100vw - 32px); box-shadow: var(--shadow); transition: opacity .2s; }
+.font-numeric { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 640px) {
+  .tools { gap: 6px; }
+  .tool { width: 40px; height: 40px; }
+  .btn .lbl { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+.pop h4 { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <div class="nav">
+      <button class="iconbtn" id="prev" aria-label="Previous month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <button class="iconbtn" id="next" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <h1 class="month" id="title">October<span class="yr">2026</span></h1>
+    <button class="pill" id="today">Today</button>
+    <div class="spacer"></div>
+    <span class="status" id="status" data-s="connecting"><i></i><span id="statusText">Connecting…</span></span>
+    <div class="menuwrap">
+      <button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg><span class="lbl">Export</span></button>
+      <div class="pop" id="exportPop" hidden>
+        <h3>Export</h3>
+        <button class="menuitem" id="exPng"><strong>This month as an image</strong><span>PNG with your writing</span></button>
+        <button class="menuitem" id="exPdf"><strong>This month as a PDF</strong><span>A4 landscape, with your writing</span></button>
+        <button class="menuitem" id="exYear"><strong id="exYearTitle">Blank 2026 planner (PDF)</strong><span>12 pages with dates printed, ready for GoodNotes, Notability or printing</span></button>
+        <h4>Backup</h4>
+        <p class="note">Your writing lives only on this device. Save a backup now and then, and before you clear browser data or change tablets.</p>
+        <button class="menuitem" id="backup"><strong>Save a backup file</strong><span>All months, as one .json file</span></button>
+        <button class="menuitem" id="restore"><strong>Restore from a backup</strong><span>Replaces the months that are in the file</span></button>
+        <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+        <div id="restoreConfirm" hidden>
+          <p class="note" id="restoreText">Replace your writing?</p>
+          <div class="confirm"><button class="btn" id="restoreNo">Cancel</button><button class="btn red" id="restoreYes">Restore</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="menuwrap">
+      <button class="iconbtn" id="setBtn" aria-label="Calendar settings" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button>
+      <div class="pop" id="setPop" hidden>
+        <h3>Calendar</h3>
+        <div class="row"><span>Week starts on</span><div class="seg" id="segWs"><button data-v="0">Sunday</button><button data-v="1">Monday</button></div></div>
+        <div class="row"><span>Day names</span><div class="seg" id="segLang"><button data-v="en">English</button><button data-v="id">Indonesia</button></div></div>
+        <div class="row"><span>Writing lines in days</span><div class="seg" id="segLines"><button data-v="0">Off</button><button data-v="1">On</button></div></div>
+        <div class="row"><span>Days from next/last month</span><div class="seg" id="segOthers"><button data-v="0">Hide</button><button data-v="1">Show</button></div></div>
+        <p class="note">A month you have already written in keeps its layout, so your notes stay in the right day.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="tools" role="toolbar" aria-label="Writing tools">
+    <div class="group">
+      <button class="tool" id="tPen" aria-label="Pen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.2-4.6L16.5 4.1a2 2 0 012.8 0l.6.6a2 2 0 010 2.8L8.6 18.8z"/><path d="M14.5 6l3.5 3.5"/></svg></button>
+      <button class="tool" id="tHl" aria-label="Highlighter" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l-2 2v3h3l2-2"/><path d="M9 15l7.5-10.5a1.6 1.6 0 012.3-.3l1 .8a1.6 1.6 0 01.2 2.3L12 18z"/><path d="M4 21h6"/></svg></button>
+      <button class="tool" id="tEr" aria-label="Eraser" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 20H20"/><path d="M4.6 14.4l8.8-8.8a2 2 0 012.8 0l2.2 2.2a2 2 0 010 2.8L10 19H7.4z"/><path d="M9 10l5 5"/></svg></button>
+    </div>
+    <div class="sep"></div>
+    <div class="group" id="swatches" aria-label="Colour"></div>
+    <div class="sep"></div>
+    <div class="group" id="sizes" aria-label="Thickness"></div>
+    <div class="sep"></div>
+    <div class="group">
+      <button class="tool" id="undo" aria-label="Undo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg></button>
+      <button class="tool" id="redo" aria-label="Redo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/></svg></button>
+    </div>
+    <div class="spacer"></div>
+    <button class="toggle" id="penOnly" aria-pressed="false" title="When on, only the stylus writes. Your palm and fingers are ignored."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/></svg>Pen only</button>
+    <div class="menuwrap">
+      <button class="toggle danger-text" id="clearBtn" aria-haspopup="true" aria-expanded="false">Clear month</button>
+      <div class="pop" id="clearPop" hidden>
+        <h3 id="clearTitle">Clear all writing in October?</h3>
+        <p class="note">The dates stay. You can bring the writing back with Undo until you leave this month.</p>
+        <div class="confirm"><button class="btn" id="clearNo">Keep it</button><button class="btn red" id="clearYes">Clear month</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="boardwrap" id="boardWrap">
+    <div class="board" id="board">
+      <canvas id="base" aria-label="Calendar page you can write on"></canvas>
+      <canvas id="live" aria-hidden="true"></canvas>
+      <span class="loading" id="loading">Loading your writing…</span>
+    </div>
+  </div>
+  <p class="hint" id="hint">Write straight into any day with your pen. The side button or eraser end of your stylus erases. Ctrl+Z undoes.</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  "use strict";
+  // ---------- constants ----------
+  const VW = 3200, VH = 2160, HEAD = 120;          // virtual page; ink is stored in these units
+  const DISPLAY = '"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif';
+  const NAMES = {
+    en: { months: ["January","February","March","April","May","June","July","August","September","October","November","December"], days: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] },
+    id: { months: ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"], days: ["Min","Sen","Sel","Rab","Kam","Jum","Sab"] },
+  };
+  const PAL = {
+    light: {
+      paper: "#ffffff", head: "#f5f6f9", rule: "#d6dae3", ruleStrong: "#b8bfcd", faint: "#e9ecf2",
+      text: "#1b1f2a", muted: "#7e8698", sun: "#cf2f3d", dimFill: "#f6f7f9", dimText: "#c4c9d4",
+      accent: "#2449d8", accentText: "#ffffff",
+      ink: { ink: "#1d2230", blue: "#2449d8", red: "#d02f3b", green: "#1f8a4c", purple: "#7b3fc4" },
+      hl: { yellow: "rgba(255,210,0,.42)", pink: "rgba(255,90,160,.32)", mint: "rgba(40,215,130,.32)" },
+    },
+    dark: {
+      paper: "#1b1f29", head: "#20252f", rule: "#343b4b", ruleStrong: "#4a5366", faint: "#262b37",
+      text: "#e8ebf2", muted: "#848da1", sun: "#ff7d86", dimFill: "#171a22", dimText: "#4a5163",
+      accent: "#8ea6ff", accentText: "#10142a",
+      ink: { ink: "#eef0f6", blue: "#8ea6ff", red: "#ff7d86", green: "#62d699", purple: "#c7a2ff" },
+      hl: { yellow: "rgba(255,214,10,.30)", pink: "rgba(255,110,170,.30)", mint: "rgba(70,230,150,.26)" },
+    },
+  };
+  const PEN_COLORS = ["ink", "blue", "red", "green", "purple"];
+  const HL_COLORS = ["yellow", "pink", "mint"];
+  const COLOR_LABEL = { ink: "Black", blue: "Blue", red: "Red", green: "Green", purple: "Purple", yellow: "Yellow", pink: "Pink", mint: "Mint" };
+  const PEN_SIZES = [5, 8, 13];
+  const HL_SIZES = [30, 48];
+  const ERASER_R = 34;
+
+  const $ = (id) => document.getElementById(id);
+  const pad2 = (n) => String(n).padStart(2, "0");
+
+  // ---------- prefs (per-device conveniences) ----------
+  const defaults = {
+    weekStart: 0, lang: (navigator.language || "").toLowerCase().startsWith("id") ? "id" : "en",
+    lines: false, others: true, penOnly: null, tool: "pen", penColor: "ink", hlColor: "yellow", penSize: 1, hlSize: 0,
+  };
+  let prefs = { ...defaults };
+  try { Object.assign(prefs, JSON.parse(localStorage.getItem("inkcal:prefs") || "{}")); } catch (e) {}
+  function savePrefs() { try { localStorage.setItem("inkcal:prefs", JSON.stringify(prefs)); } catch (e) {} }
+
+  // ---------- theme ----------
+  const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  function isDark() {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t === "dark") return true;
+    if (t === "light") return false;
+    return !!(mq && mq.matches);
+  }
+  let P = isDark() ? PAL.dark : PAL.light;
+  function onTheme() { P = isDark() ? PAL.dark : PAL.light; renderTools(); renderBase(); }
+  if (mq && mq.addEventListener) mq.addEventListener("change", onTheme);
+  new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  // ---------- calendar geometry ----------
+  function geom(y, m, ws) {
+    const off = (new Date(y, m, 1).getDay() - ws + 7) % 7;
+    const dim = new Date(y, m + 1, 0).getDate();
+    const rows = Math.ceil((off + dim) / 7);
+    return { off, dim, rows, cw: VW / 7, rh: (VH - HEAD) / rows };
+  }
+  function rowOf(yv, g) { return Math.max(0, Math.min(g.rows - 1, Math.floor((yv - HEAD) / g.rh))); }
+
+  function drawGrid(ctx, pal, y, m, ws) {
+    const g = geom(y, m, ws);
+    const names = NAMES[prefs.lang] || NAMES.en;
+    const now = new Date();
+    ctx.fillStyle = pal.paper; ctx.fillRect(0, 0, VW, VH);
+    ctx.fillStyle = pal.head; ctx.fillRect(0, 0, VW, HEAD);
+
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `700 40px ${DISPLAY}`;
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "4px";
+    for (let c = 0; c < 7; c++) {
+      const dow = (ws + c) % 7;
+      ctx.fillStyle = dow === 0 ? pal.sun : pal.muted;
+      ctx.fillText(names.days[dow].toUpperCase(), c * g.cw + g.cw / 2, HEAD / 2 + 2);
+    }
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+
+    for (let r = 0; r < g.rows; r++) {
+      for (let c = 0; c < 7; c++) {
+        const i = r * 7 + c, dayNum = i - g.off + 1;
+        const inMonth = dayNum >= 1 && dayNum <= g.dim;
+        const d = new Date(y, m, dayNum);
+        const x = c * g.cw, top = HEAD + r * g.rh;
+        if (!inMonth) { ctx.fillStyle = pal.dimFill; ctx.fillRect(x, top, g.cw, g.rh); }
+        if (prefs.lines) {
+          ctx.strokeStyle = pal.faint; ctx.lineWidth = 2;
+          ctx.beginPath();
+          for (let ly = top + 150; ly < top + g.rh - 20; ly += 72) { ctx.moveTo(x + 26, ly); ctx.lineTo(x + g.cw - 26, ly); }
+          ctx.stroke();
+        }
+        if (!inMonth && !prefs.others) continue;
+        const isToday = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+        const cx = x + 66, cy = top + 66;
+        if (isToday && inMonth) {
+          ctx.fillStyle = pal.accent; ctx.beginPath(); ctx.arc(cx, cy, 46, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = pal.accentText;
+        } else {
+          ctx.fillStyle = !inMonth ? pal.dimText : (d.getDay() === 0 ? pal.sun : pal.text);
+        }
+        ctx.font = `${inMonth ? 700 : 500} 52px ${DISPLAY}`;
+        ctx.fillText(String(d.getDate()), cx, cy + 3);
+      }
+    }
+    ctx.strokeStyle = pal.rule; ctx.lineWidth = 2; ctx.beginPath();
+    for (let c = 1; c < 7; c++) { ctx.moveTo(c * g.cw, 0); ctx.lineTo(c * g.cw, VH); }
+    for (let r = 1; r < g.rows; r++) { ctx.moveTo(0, HEAD + r * g.rh); ctx.lineTo(VW, HEAD + r * g.rh); }
+    ctx.stroke();
+    ctx.strokeStyle = pal.ruleStrong; ctx.lineWidth = 3; ctx.beginPath();
+    ctx.moveTo(0, HEAD); ctx.lineTo(VW, HEAD); ctx.stroke();
+    ctx.strokeRect(1.5, 1.5, VW - 3, VH - 3);
+  }
+
+  // ---------- strokes ----------
+  const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const penW = (s, p) => s.w * (0.45 + (p / 100) * 1.1);
+
+  function penSeg(ctx, s, i) {
+    const pts = s.pts, p0 = pts[i - 1], p1 = pts[i];
+    const a = i === 1 ? p0 : mid(pts[i - 2], p0), b = mid(p0, p1);
+    ctx.lineWidth = penW(s, (p0[2] + p1[2]) / 2);
+    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(p0[0], p0[1], b[0], b[1]); ctx.stroke();
+  }
+  function hlPath(ctx, s) {
+    const pts = s.pts;
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+    if (pts.length === 1) { ctx.lineTo(pts[0][0] + 0.1, pts[0][1]); return; }
+    for (let i = 1; i < pts.length - 1; i++) { const b = mid(pts[i], pts[i + 1]); ctx.quadraticCurveTo(pts[i][0], pts[i][1], b[0], b[1]); }
+    const l = pts[pts.length - 1]; ctx.lineTo(l[0], l[1]);
+  }
+  function drawStroke(ctx, pal, s) {
+    const pts = s.pts; if (!pts.length) return;
+    ctx.lineCap = "round"; ctx.lineJoin = "round";
+    if (s.k === "h") {
+      ctx.strokeStyle = pal.hl[s.c] || pal.hl.yellow; ctx.lineWidth = s.w; hlPath(ctx, s); ctx.stroke(); return;
+    }
+    const col = pal.ink[s.c] || pal.ink.ink;
+    ctx.strokeStyle = col; ctx.fillStyle = col;
+    if (pts.length === 1) { ctx.beginPath(); ctx.arc(pts[0][0], pts[0][1], penW(s, pts[0][2]) / 2, 0, Math.PI * 2); ctx.fill(); return; }
+    for (let i = 1; i < pts.length; i++) penSeg(ctx, s, i);
+    const n = pts.length, a = mid(pts[n - 2], pts[n - 1]);
+    ctx.lineWidth = penW(s, pts[n - 1][2]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(pts[n - 1][0], pts[n - 1][1]); ctx.stroke();
+  }
+  function bbox(s) {
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const p of s.pts) { if (p[0] < a) a = p[0]; if (p[1] < b) b = p[1]; if (p[0] > c) c = p[0]; if (p[1] > d) d = p[1]; }
+    s.bb = [a, b, c, d];
+  }
+  function segDist2(x, y, a, b) {
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+    let t = L ? ((x - a[0]) * dx + (y - a[1]) * dy) / L : 0; t = Math.max(0, Math.min(1, t));
+    const px = a[0] + t * dx - x, py = a[1] + t * dy - y; return px * px + py * py;
+  }
+  function hits(s, x, y) {
+    const b = s.bb, pad = ERASER_R + s.w;
+    if (x < b[0] - pad || x > b[2] + pad || y < b[1] - pad || y > b[3] + pad) return false;
+    const rr = (ERASER_R + s.w / 2) ** 2, pts = s.pts;
+    if (pts.length === 1) return (pts[0][0] - x) ** 2 + (pts[0][1] - y) ** 2 < rr;
+    for (let i = 1; i < pts.length; i++) if (segDist2(x, y, pts[i - 1], pts[i]) < rr) return true;
+    return false;
+  }
+  // compact delta encoding: [x, y, p, dx, dy, dp, ...] as integers
+  function enc(s) {
+    const d = []; let px = 0, py = 0, pp = 0;
+    for (const [x, y, p] of s.pts) { d.push(x - px, y - py, p - pp); px = x; py = y; pp = p; }
+    return { k: s.k, c: s.c, w: s.w, d };
+  }
+  function dec(o, r) {
+    const pts = []; let x = 0, y = 0, p = 0; const d = Array.isArray(o.d) ? o.d : [];
+    for (let i = 0; i + 2 < d.length; i += 3) { x += d[i]; y += d[i + 1]; p += d[i + 2]; pts.push([x, y, p]); }
+    const s = { k: o.k === "h" ? "h" : "p", c: String(o.c || "ink"), w: Number(o.w) || 8, pts, r }; bbox(s); return s;
+  }
+
+  // ---------- storage (IndexedDB on this device) ----------
+  // One record per month: { ws, rows: { [row]: [encodedStroke, ...] } }
+  let store = { kind: "pending" };
+  const memStore = {};
+  let idbPromise = null;
+  function idbOpen() {
+    return idbPromise || (idbPromise = new Promise((res, rej) => {
+      const req = indexedDB.open("inkcal", 1);
+      req.onupgradeneeded = () => req.result.createObjectStore("months");
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    }));
+  }
+  async function idbTx(mode, fn) {
+    const db = await idbOpen();
+    return new Promise((res, rej) => {
+      const t = db.transaction("months", mode);
+      let out;
+      fn(t.objectStore("months"), (v) => { out = v; });
+      t.oncomplete = () => res(out);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error);
+    });
+  }
+  const idbGet = (key) => idbTx("readonly", (st, done) => { const r = st.get(key); r.onsuccess = () => done(r.result); });
+  async function idbAll() {
+    return idbTx("readonly", (st, done) => {
+      const out = {}; const req = st.openCursor();
+      req.onsuccess = () => { const c = req.result; if (c) { out[c.key] = c.value; c.continue(); } else done(out); };
+    });
+  }
+  const storeReady = (async () => {
+    try {
+      await idbOpen(); store = { kind: "idb" };
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    } catch (e) { store = { kind: "memory" }; }
+  })();
+
+  async function loadMonthData(key) {
+    const obj = store.kind === "idb" ? await idbGet(key) : memStore[key];
+    if (!obj) return { ws: null, strokes: [] };
+    const strokes = [];
+    for (const r of Object.keys(obj.rows || {})) for (const o of obj.rows[r]) strokes.push(dec(o, Number(r)));
+    return { ws: obj.ws, strokes };
+  }
+
+  const chains = new Map(); let inflight = 0, saveError = false;
+  function applyRow(obj, ws, r, list) {
+    obj = obj || { ws, rows: {} };
+    obj.ws = ws; obj.rows = obj.rows || {};
+    if (list.length) obj.rows[r] = list; else delete obj.rows[r];
+    return obj;
+  }
+  async function writeRow(key, ws, r, list) {
+    if (store.kind === "memory") { memStore[key] = applyRow(memStore[key], ws, r, list); return; }
+    // read-modify-write inside one transaction so rows of the same month never clobber each other
+    await idbTx("readwrite", (st) => {
+      const g = st.get(key);
+      g.onsuccess = () => {
+        const obj = applyRow(g.result, ws, r, list);
+        if (Object.keys(obj.rows).length) st.put(obj, key); else st.delete(key);
+      };
+    });
+  }
+  function queueWrite(key, ws, r, list) {
+    const id = key + ":" + r;
+    inflight++; updateStatus();
+    const p = (chains.get(id) || Promise.resolve())
+      .then(() => writeRow(key, ws, r, list))
+      .then(() => { saveError = false; })
+      .catch((e) => {
+        saveError = true;
+        toast(e && e.name === "QuotaExceededError" ? "This device's storage is full, so this change wasn't saved. Free some space, then write again." : "Couldn't save your last change. It will retry when you write again.");
+        dirtyAgain(key, r);
+      })
+      .finally(() => { inflight--; updateStatus(); });
+    chains.set(id, p);
+  }
+
+  // ---------- month state ----------
+  const today = new Date();
+  let month = null, loadToken = 0;
+  let undoStack = [], redoStack = [];
+  let dirty = new Set(), saveTimer = null;
+
+  function keyOf(y, m) { return `${y}-${pad2(m + 1)}`; }
+  function markDirty(r) { dirty.add(r); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 1200); updateStatus(); }
+  function dirtyAgain(key, r) { if (month && month.key === key) { dirty.add(r); updateStatus(); } }
+  function flush() {
+    clearTimeout(saveTimer);
+    if (!month || !month.loaded || !dirty.size) return;
+    const rows = [...dirty]; dirty.clear();
+    for (const r of rows) queueWrite(month.key, month.ws, r, month.strokes.filter((s) => s.r === r).map(enc));
+  }
+
+  function goto(y, m) {
+    flush();
+    if (m < 0) { y--; m = 11; } if (m > 11) { y++; m = 0; }
+    month = { y, m, key: keyOf(y, m), ws: prefs.weekStart, strokes: [], loaded: false };
+    undoStack = []; redoStack = []; dirty = new Set();
+    renderTitle(); updateUndo(); renderBase();
+    loadCurrent();
+  }
+  async function loadCurrent(silent) {
+    const tok = ++loadToken, mo = month;
+    if (!silent) $("loading").hidden = false;
+    await storeReady; updateStatus();
+    let data;
+    try { data = await loadMonthData(mo.key); }
+    catch (e) { data = { ws: null, strokes: [] }; toast("Couldn't load this month's writing. Check your connection and reopen the month."); }
+    if (tok !== loadToken || mo !== month) return;
+    const drawnMeanwhile = silent ? [] : mo.strokes;
+    if (data.strokes.length && (data.ws === 0 || data.ws === 1)) mo.ws = data.ws;
+    mo.strokes = data.strokes.concat(drawnMeanwhile);
+    mo.loaded = true;
+    $("loading").hidden = true;
+    renderBase();
+    if (dirty.size) markDirty([...dirty][0]);
+  }
+
+  // ---------- canvases ----------
+  const board = $("board"), base = $("base"), live = $("live");
+  const bctx = base.getContext("2d"), lctx = live.getContext("2d");
+  let scale = 1;
+  function fit() {
+    const wrap = $("boardWrap");
+    const availW = wrap.clientWidth;
+    const top = wrap.getBoundingClientRect().top + window.scrollY;
+    const availH = Math.max(280, window.innerHeight - top - 52);
+    let w = availW < 720 ? availW : Math.min(availW, availH * VW / VH);
+    w = Math.floor(w); const h = Math.round(w * VH / VW);
+    board.style.width = w + "px"; board.style.height = h + "px";
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    for (const c of [base, live]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
+    scale = base.width / VW;
+    renderBase(); clearLive();
+  }
+  function setT(ctx) { ctx.setTransform(scale, 0, 0, scale, 0, 0); }
+  function renderBase() {
+    if (!month) return;
+    setT(bctx);
+    drawGrid(bctx, P, month.y, month.m, month.ws);
+    for (const s of month.strokes) drawStroke(bctx, P, s);
+  }
+  let baseQueued = false;
+  function queueBase() { if (baseQueued) return; baseQueued = true; requestAnimationFrame(() => { baseQueued = false; renderBase(); }); }
+  function clearLive() { lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, live.width, live.height); }
+
+  // ---------- input ----------
+  let active = null; // {id, mode:'draw'|'erase', s, removed}
+  let penSeen = false;
+  function toV(e) {
+    const r = live.getBoundingClientRect();
+    return [Math.round((e.clientX - r.left) * VW / r.width), Math.round((e.clientY - r.top) * VH / r.height)];
+  }
+  function pressureOf(e) {
+    if (e.pointerType === "pen" && e.pressure > 0) return Math.round(Math.min(1, e.pressure) * 100);
+    return 50;
+  }
+  function eraseAt(x, y) {
+    const keep = [];
+    let changed = false;
+    for (const s of month.strokes) {
+      if (hits(s, x, y)) { active.removed.push(s); markDirty(s.r); changed = true; } else keep.push(s);
+    }
+    if (changed) { month.strokes = keep; queueBase(); }
+  }
+  function drawEraserCursor(x, y) {
+    clearLive(); setT(lctx);
+    lctx.strokeStyle = P.muted; lctx.lineWidth = 3; lctx.beginPath(); lctx.arc(x, y, ERASER_R, 0, Math.PI * 2); lctx.stroke();
+  }
+
+  live.addEventListener("pointerdown", (e) => {
+    if (!month) return;
+    if (e.pointerType === "pen" && !penSeen) {
+      penSeen = true;
+      if (prefs.penOnly === null) { prefs.penOnly = true; savePrefs(); renderPenOnly(); toast("Stylus detected. Pen only is on, so your palm won't leave marks."); }
+    }
+    if (e.pointerType === "touch" && prefs.penOnly) return;
+    if (active) { if (e.pointerType === "pen" && active.type !== "pen") cancelActive(); else return; }
+    e.preventDefault();
+    try { live.setPointerCapture(e.pointerId); } catch (err) {}
+    closePops();
+    const erasing = prefs.tool === "eraser" || (e.buttons & 32) === 32 || (e.pointerType === "pen" && (e.buttons & 2) === 2);
+    const [x, y] = toV(e);
+    if (erasing) {
+      active = { id: e.pointerId, type: e.pointerType, mode: "erase", removed: [] };
+      eraseAt(x, y); drawEraserCursor(x, y);
+    } else {
+      const hl = prefs.tool === "hl";
+      const s = { k: hl ? "h" : "p", c: hl ? prefs.hlColor : prefs.penColor, w: hl ? HL_SIZES[prefs.hlSize] || HL_SIZES[0] : PEN_SIZES[prefs.penSize] || PEN_SIZES[1], pts: [[x, y, pressureOf(e)]] };
+      active = { id: e.pointerId, type: e.pointerType, mode: "draw", s };
+      clearLive(); setT(lctx);
+      if (!hl) { lctx.fillStyle = P.ink[s.c]; lctx.beginPath(); lctx.arc(x, y, penW(s, s.pts[0][2]) / 2, 0, Math.PI * 2); lctx.fill(); }
+    }
+  });
+  live.addEventListener("pointermove", (e) => {
+    if (!active || e.pointerId !== active.id) return;
+    e.preventDefault();
+    const evs = typeof e.getCoalescedEvents === "function" ? e.getCoalescedEvents() : [];
+    const list = evs.length ? evs : [e];
+    if (active.mode === "erase") {
+      let last; for (const ev of list) { last = toV(ev); eraseAt(last[0], last[1]); }
+      drawEraserCursor(last[0], last[1]); return;
+    }
+    const s = active.s; setT(lctx); lctx.lineCap = "round"; lctx.lineJoin = "round";
+    let added = false;
+    for (const ev of list) {
+      const [x, y] = toV(ev), prev = s.pts[s.pts.length - 1];
+      if ((x - prev[0]) ** 2 + (y - prev[1]) ** 2 < 4) continue;
+      s.pts.push([x, y, pressureOf(ev)]); added = true;
+      if (s.k === "p") { lctx.strokeStyle = P.ink[s.c]; penSeg(lctx, s, s.pts.length - 1); }
+    }
+    if (added && s.k === "h") { clearLive(); setT(lctx); lctx.lineCap = "round"; lctx.lineJoin = "round"; lctx.strokeStyle = P.hl[s.c]; lctx.lineWidth = s.w; hlPath(lctx, s); lctx.stroke(); }
+  });
+  function endPointer(e) {
+    if (!active || e.pointerId !== active.id) return;
+    const a = active; active = null;
+    if (a.mode === "erase") {
+      clearLive();
+      if (a.removed.length) pushOp({ t: "erase", list: a.removed });
+      return;
+    }
+    const s = a.s; bbox(s);
+    s.r = rowOf(s.pts[0][1], geom(month.y, month.m, month.ws));
+    month.strokes.push(s);
+    setT(bctx); drawStroke(bctx, P, s); clearLive();
+    markDirty(s.r);
+    pushOp({ t: "add", s });
+  }
+  function cancelActive() {
+    if (!active) return;
+    if (active.mode === "erase" && active.removed.length) pushOp({ t: "erase", list: active.removed });
+    active = null; clearLive();
+  }
+  live.addEventListener("pointerup", endPointer);
+  live.addEventListener("pointercancel", endPointer);
+  live.addEventListener("pointerleave", () => { if (!active && prefs.tool === "eraser") clearLive(); });
+  live.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // ---------- undo ----------
+  function pushOp(op) { undoStack.push(op); if (undoStack.length > 200) undoStack.shift(); redoStack = []; updateUndo(); }
+  function removeStrokes(list) { const set = new Set(list); month.strokes = month.strokes.filter((s) => !set.has(s)); list.forEach((s) => markDirty(s.r)); }
+  function addStrokes(list) { month.strokes.push(...list); list.forEach((s) => markDirty(s.r)); }
+  function applyOp(op, reverse) {
+    const adds = op.t === "add" ? [op.s] : op.list;
+    if ((op.t === "add") !== reverse) addStrokes(adds); else removeStrokes(adds);
+    renderBase();
+  }
+  function undo() { const op = undoStack.pop(); if (!op) return; applyOp(op, true); redoStack.push(op); updateUndo(); }
+  function redo() { const op = redoStack.pop(); if (!op) return; applyOp(op, false); undoStack.push(op); updateUndo(); }
+  function updateUndo() { $("undo").disabled = !undoStack.length; $("redo").disabled = !redoStack.length; }
+  $("undo").onclick = undo; $("redo").onclick = redo;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePops();
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+    else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
+  });
+
+  // ---------- UI ----------
+  function renderTitle() {
+    const names = NAMES[prefs.lang] || NAMES.en;
+    const t = $("title"); t.textContent = names.months[month.m];
+    const yr = document.createElement("span"); yr.className = "yr"; yr.textContent = month.y; t.appendChild(yr);
+    $("clearTitle").textContent = `Clear all writing in ${names.months[month.m]}?`;
+    $("exYearTitle").textContent = `Blank ${month.y} planner (PDF)`;
+  }
+  function renderTools() {
+    for (const [id, t] of [["tPen", "pen"], ["tHl", "hl"], ["tEr", "eraser"]]) $(id).setAttribute("aria-pressed", String(prefs.tool === t));
+    const sw = $("swatches"), sz = $("sizes"); sw.innerHTML = ""; sz.innerHTML = "";
+    const hl = prefs.tool === "hl", er = prefs.tool === "eraser";
+    sw.hidden = er; sz.hidden = er;
+    sw.previousElementSibling.hidden = er; sz.previousElementSibling.hidden = er;
+    if (er) return;
+    for (const c of hl ? HL_COLORS : PEN_COLORS) {
+      const b = document.createElement("button"); b.className = "sw";
+      b.style.background = hl ? P.hl[c].replace(/,\.\d+\)/, ",1)") : P.ink[c];
+      b.setAttribute("aria-label", COLOR_LABEL[c]); b.setAttribute("aria-pressed", String((hl ? prefs.hlColor : prefs.penColor) === c));
+      b.onclick = () => { if (hl) prefs.hlColor = c; else prefs.penColor = c; savePrefs(); renderTools(); };
+      sw.appendChild(b);
+    }
+    const sizes = hl ? HL_SIZES : PEN_SIZES, cur = hl ? prefs.hlSize : prefs.penSize;
+    const labels = hl ? ["Thin highlighter", "Wide highlighter"] : ["Fine", "Medium", "Bold"];
+    sizes.forEach((v, i) => {
+      const b = document.createElement("button"); b.className = "size";
+      b.setAttribute("aria-label", labels[i]); b.setAttribute("aria-pressed", String(cur === i));
+      const dot = document.createElement("b"); const px = hl ? 10 + i * 6 : 4 + i * 4;
+      dot.style.width = dot.style.height = px + "px"; if (hl) dot.style.borderRadius = "3px";
+      b.appendChild(dot);
+      b.onclick = () => { if (hl) prefs.hlSize = i; else prefs.penSize = i; savePrefs(); renderTools(); };
+      sz.appendChild(b);
+    });
+  }
+  function setTool(t) { prefs.tool = t; savePrefs(); renderTools(); clearLive(); }
+  $("tPen").onclick = () => setTool("pen"); $("tHl").onclick = () => setTool("hl"); $("tEr").onclick = () => setTool("eraser");
+
+  function renderPenOnly() { $("penOnly").setAttribute("aria-pressed", String(!!prefs.penOnly)); }
+  $("penOnly").onclick = () => { prefs.penOnly = !prefs.penOnly; savePrefs(); renderPenOnly(); toast(prefs.penOnly ? "Pen only is on. Fingers and palm won't draw." : "Pen only is off. Fingers and mouse can draw too."); };
+
+  function updateStatus() {
+    const el = $("status"), tx = $("statusText");
+    let s, t;
+    if (store.kind === "pending") { s = "connecting"; t = "Opening…"; }
+    else if (store.kind === "memory") { s = "memory"; t = "Not saved: storage is blocked"; }
+    else if (inflight || dirty.size) { s = "saving"; t = "Saving…"; }
+    else if (saveError) { s = "error"; t = "Not saved yet"; }
+    else { s = "saved"; t = "Saved on this device"; }
+    el.dataset.s = s; tx.textContent = t;
+  }
+
+  // popovers
+  const pops = [["exportBtn", "exportPop"], ["setBtn", "setPop"], ["clearBtn", "clearPop"]];
+  function closePops() { for (const [b, p] of pops) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); } }
+  for (const [b, p] of pops) {
+    $(b).onclick = (e) => { e.stopPropagation(); const open = $(p).hidden; closePops(); if (open) { $(p).hidden = false; $(b).setAttribute("aria-expanded", "true"); if (p === "setPop") renderSettings(); if (p === "exportPop") $("restoreConfirm").hidden = true; } };
+  }
+  document.addEventListener("pointerdown", (e) => {
+    for (const [b, p] of pops) if (!$(p).hidden && !$(p).contains(e.target) && !$(b).contains(e.target)) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); }
+  });
+
+  function bindSeg(id, get, set) {
+    const seg = $(id);
+    seg.querySelectorAll("button").forEach((b) => { b.onclick = () => { set(b.dataset.v); savePrefs(); renderSettings(); }; });
+    return () => seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(String(get()) === b.dataset.v)));
+  }
+  const segRenders = [
+    bindSeg("segWs", () => prefs.weekStart, (v) => {
+      prefs.weekStart = Number(v);
+      if (month.strokes.length) toast("This month keeps its layout because you've written in it. Empty months use the new setting.");
+      else { month.ws = prefs.weekStart; renderBase(); }
+    }),
+    bindSeg("segLang", () => prefs.lang, (v) => { prefs.lang = v; renderTitle(); renderBase(); }),
+    bindSeg("segLines", () => (prefs.lines ? 1 : 0), (v) => { prefs.lines = v === "1"; renderBase(); }),
+    bindSeg("segOthers", () => (prefs.others ? 1 : 0), (v) => { prefs.others = v === "1"; renderBase(); }),
+  ];
+  function renderSettings() { segRenders.forEach((f) => f()); }
+
+  $("clearNo").onclick = closePops;
+  $("clearYes").onclick = () => {
+    closePops();
+    if (!month.strokes.length) { toast("There's no writing in this month yet."); return; }
+    const list = month.strokes.slice(); removeStrokes(list); renderBase(); pushOp({ t: "clear", list });
+    toast("Month cleared. Press Undo to bring it back.");
+  };
+
+  $("prev").onclick = () => goto(month.y, month.m - 1);
+  $("next").onclick = () => goto(month.y, month.m + 1);
+  $("today").onclick = () => goto(today.getFullYear(), today.getMonth());
+
+  let toastTimer;
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.hidden = false; t.style.opacity = "1";
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.opacity = "0"; setTimeout(() => { t.hidden = true; }, 220); }, 3600);
+  }
+
+  // ---------- export ----------
+  const TITLE_BAND = 280;
+  function renderPage(y, m, ws, strokes, pxScale) {
+    const c = document.createElement("canvas");
+    c.width = Math.round(VW * pxScale); c.height = Math.round((VH + TITLE_BAND) * pxScale);
+    const ctx = c.getContext("2d"); const pal = PAL.light; const names = NAMES[prefs.lang] || NAMES.en;
+    ctx.setTransform(pxScale, 0, 0, pxScale, 0, 0);
+    ctx.fillStyle = pal.paper; ctx.fillRect(0, 0, VW, VH + TITLE_BAND);
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = pal.text; ctx.font = `800 150px ${DISPLAY}`;
+    const name = names.months[m]; ctx.fillText(name, 10, 190);
+    const w = ctx.measureText(name).width;
+    ctx.fillStyle = pal.muted; ctx.font = `400 150px ${DISPLAY}`; ctx.fillText(" " + y, 10 + w, 190);
+    ctx.translate(0, TITLE_BAND);
+    drawGrid(ctx, pal, y, m, ws);
+    for (const s of strokes) drawStroke(ctx, pal, s);
+    return c;
+  }
+  function loadJsPDF() {
+    if (window.jspdf) return Promise.resolve(window.jspdf);
+    return new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "vendor/jspdf.umd.min.js";
+      s.onload = () => (window.jspdf ? res(window.jspdf) : rej(new Error("jsPDF missing")));
+      s.onerror = () => rej(new Error("jsPDF failed to load"));
+      document.head.appendChild(s);
+    });
+  }
+  function addPdfPage(doc, canvas, first) {
+    if (!first) doc.addPage("a4", "landscape");
+    const pw = 297, ph = 210, mgn = 10;
+    const ar = canvas.width / canvas.height;
+    let w = pw - mgn * 2, h = w / ar;
+    if (h > ph - mgn * 2) { h = ph - mgn * 2; w = h * ar; }
+    doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", (pw - w) / 2, (ph - h) / 2, w, h);
+  }
+  async function offer(filename, blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast(`Saved ${filename} to your Downloads.`);
+  }
+  async function busy(btn, fn) {
+    btn.disabled = true;
+    try { await fn(); } catch (e) { toast("Export failed. Try again."); }
+    finally { btn.disabled = false; closePops(); }
+  }
+
+  // ---------- backup / restore ----------
+  $("backup").onclick = () => busy($("backup"), async () => {
+    flush();
+    await Promise.all([...chains.values()]);
+    const months = store.kind === "idb" ? await idbAll() : { ...memStore };
+    const n = Object.keys(months).length;
+    if (!n) { toast("Nothing to back up yet. Write something first."); return; }
+    const data = JSON.stringify({ app: "ink-calendar", v: 1, exported: new Date().toISOString(), months });
+    const d = new Date();
+    await offer(`ink-calendar-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`, new Blob([data], { type: "application/json" }));
+  });
+  let pendingRestore = null;
+  $("restore").onclick = () => { $("restoreFile").value = ""; $("restoreFile").click(); };
+  $("restoreFile").onchange = async () => {
+    const f = $("restoreFile").files[0]; if (!f) return;
+    try {
+      const obj = JSON.parse(await f.text());
+      if (!obj || obj.app !== "ink-calendar" || typeof obj.months !== "object") throw new Error("bad");
+      const keys = Object.keys(obj.months).filter((k) => /^\d{4}-\d{2}$/.test(k)).sort();
+      if (!keys.length) throw new Error("empty");
+      pendingRestore = { months: obj.months, keys };
+      const names = NAMES.en.months;
+      const label = (k) => `${names[Number(k.slice(5)) - 1]} ${k.slice(0, 4)}`;
+      $("restoreText").textContent = `This backup has ${keys.length} month${keys.length > 1 ? "s" : ""} (${label(keys[0])}${keys.length > 1 ? " to " + label(keys[keys.length - 1]) : ""}). Restoring replaces your writing in those months. Other months stay as they are.`;
+      $("restoreConfirm").hidden = false;
+      $("exportPop").hidden = false; $("exportBtn").setAttribute("aria-expanded", "true");
+    } catch (e) { toast("That file isn't an Ink Calendar backup."); }
+  };
+  $("restoreNo").onclick = () => { pendingRestore = null; $("restoreConfirm").hidden = true; };
+  $("restoreYes").onclick = async () => {
+    if (!pendingRestore) return;
+    const { months, keys } = pendingRestore; pendingRestore = null;
+    $("restoreConfirm").hidden = true; closePops();
+    flush(); await Promise.all([...chains.values()]);
+    try {
+      if (store.kind === "idb") await idbTx("readwrite", (st) => { for (const k of keys) st.put(months[k], k); });
+      else for (const k of keys) memStore[k] = months[k];
+      toast(`Restored ${keys.length} month${keys.length > 1 ? "s" : ""}.`);
+      goto(month.y, month.m);
+    } catch (e) { toast("Couldn't restore. Free some storage space and try again."); }
+  };
+  $("exPng").onclick = () => busy($("exPng"), async () => {
+    const c = renderPage(month.y, month.m, month.ws, month.strokes, 1);
+    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+    await offer(`calendar-${month.key}.png`, blob);
+  });
+  $("exPdf").onclick = () => busy($("exPdf"), async () => {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    addPdfPage(doc, renderPage(month.y, month.m, month.ws, month.strokes, 1), true);
+    await offer(`calendar-${month.key}.pdf`, doc.output("blob"));
+  });
+  $("exYear").onclick = () => busy($("exYear"), async () => {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    for (let m = 0; m < 12; m++) addPdfPage(doc, renderPage(month.y, m, prefs.weekStart, [], 0.8), m === 0);
+    await offer(`planner-${month.y}.pdf`, doc.output("blob"));
+  });
+
+  // ---------- lifecycle ----------
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+  window.addEventListener("pagehide", flush);
+  new ResizeObserver(() => fit()).observe($("boardWrap"));
+  window.addEventListener("resize", fit);
+
+  renderTools(); renderPenOnly();
+  goto(today.getFullYear(), today.getMonth());
+  fit();
+  if (document.fonts && document.fonts.load) {
+    Promise.all([document.fonts.load(`700 52px ${DISPLAY}`), document.fonts.load(`800 40px ${DISPLAY}`)]).then(() => renderBase(), () => {});
+  }
+  storeReady.then(updateStatus);
+
+  // offline support: cache the app the first time it loads
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  }
+})();
+</script>
+</body>
+</html>
