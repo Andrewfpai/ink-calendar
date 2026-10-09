@@ -1,6 +1,6 @@
 // Caches the whole app so it opens with no internet after the first visit.
 // Bump VERSION whenever you change any file, so installed copies pick up the update.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `ink-calendar-${VERSION}`;
 const FILES = [
   "./",

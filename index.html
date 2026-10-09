@@ -16,7 +16,7 @@
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 [hidden] { display: none !important; }
-/* Layout: one working screen — month header, a tool strip, and a paper-like month grid sized to fit the viewport for pen writing. */
+/* Layout: month header, a tool strip with per-tool settings, then a paper page: the month grid sized to the screen, a notes area below it. */
 :root {
   --bg: #eceef2;
   --surface: #ffffff;
@@ -28,6 +28,7 @@ body { margin: 0; }
   --accent-soft: #e2e8ff;
   --sun: #cf2f3d;
   --danger: #c8283a;
+  --ok: #2e9e5b;
   --shadow: 0 1px 2px rgba(20, 28, 60, .06), 0 10px 30px rgba(20, 28, 60, .08);
   --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --font-body: "Figtree", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
@@ -36,7 +37,7 @@ body { margin: 0; }
   :root:not([data-theme="light"]) {
     --bg: #11141a; --surface: #1b1f29; --surface-2: #232834; --line: #313848;
     --text: #e8ebf2; --muted: #9aa2b5; --accent: #8ea6ff; --accent-soft: #252f55;
-    --sun: #ff7d86; --danger: #ff7d86;
+    --sun: #ff7d86; --danger: #ff7d86; --ok: #4fc684;
     --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
     color-scheme: dark;
   }
@@ -44,7 +45,7 @@ body { margin: 0; }
 :root[data-theme="dark"] {
   --bg: #11141a; --surface: #1b1f29; --surface-2: #232834; --line: #313848;
   --text: #e8ebf2; --muted: #9aa2b5; --accent: #8ea6ff; --accent-soft: #252f55;
-  --sun: #ff7d86; --danger: #ff7d86;
+  --sun: #ff7d86; --danger: #ff7d86; --ok: #4fc684;
   --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
   color-scheme: dark;
 }
@@ -52,7 +53,7 @@ body { margin: 0; }
 * { box-sizing: border-box; }
 html, body { background: var(--bg); color: var(--text); }
 body { font-family: var(--font-body); font-size: 15px; line-height: 1.45; }
-.app { max-width: 1500px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 20px; display: flex; flex-direction: column; gap: 12px; }
+.app { max-width: 1500px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 24px; display: flex; flex-direction: column; gap: 12px; }
 
 button { font: inherit; color: inherit; cursor: pointer; }
 button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -70,30 +71,29 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .spacer { flex: 1; }
 .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
 .status i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
-.status[data-s="saved"] i { background: #2e9e5b; }
+.status[data-s="saved"] i { background: var(--ok); }
 .status[data-s="saving"] i { background: var(--accent); }
 .status[data-s="error"] i, .status[data-s="memory"] i { background: var(--danger); }
-.status[data-s="local"] i { background: #d39a12; }
 .menuwrap { position: relative; }
 .btn { height: 40px; padding-inline: 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; }
 .btn:hover { background: var(--surface-2); }
 .btn svg { width: 18px; height: 18px; }
 
 /* Tool strip */
-.tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.tools { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
 .group { display: flex; align-items: center; gap: 4px; }
 .sep { width: 1px; align-self: stretch; background: var(--line); margin-inline: 2px; }
-.tool { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; border: 1px solid transparent; background: transparent; }
+.tool { position: relative; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 10px; border: 1px solid transparent; background: transparent; }
 .tool:hover { background: var(--surface-2); }
 .tool[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.tool[aria-pressed="true"]::after { content: ""; position: absolute; right: 4px; bottom: 4px; border: 4px solid transparent; border-right-color: currentColor; border-bottom-color: currentColor; border-radius: 1px; opacity: .7; }
 .tool svg { width: 22px; height: 22px; }
 .tool:disabled { opacity: .35; cursor: default; background: transparent; }
-.sw { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 0; }
+.sw { position: relative; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); padding: 0; flex: none; }
 .sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
-.size { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 10px; border: 1px solid transparent; background: transparent; }
-.size:hover { background: var(--surface-2); }
-.size[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
-.size b { display: block; border-radius: 50%; background: var(--text); }
+.sw.auto { background: linear-gradient(135deg, #1d2230 50%, #eef0f6 50%); }
+.sw.custom { background: conic-gradient(#ff4d4d, #ffd400, #3ee08f, #3db8ff, #8a5cff, #ff4dc4, #ff4d4d); overflow: hidden; cursor: pointer; }
+.sw.custom input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 .toggle { height: 40px; padding-inline: 12px; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid var(--line); background: transparent; font-weight: 500; font-size: 14px; }
 .toggle[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
 .toggle svg { width: 18px; height: 18px; }
@@ -103,16 +103,35 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .boardwrap { width: 100%; display: flex; justify-content: center; }
 .board { position: relative; border-radius: 6px; box-shadow: var(--shadow); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: crosshair; max-width: 100%; }
 .board canvas { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 6px; touch-action: none; }
-.board .loading { position: absolute; inset: auto 12px 12px auto; font-size: 12px; color: var(--muted); background: var(--surface); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); pointer-events: none; }
-.hint { font-size: 13px; color: var(--muted); text-align: center; }
+.board .loading { position: absolute; top: 12px; right: 12px; font-size: 12px; color: var(--muted); background: var(--surface); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); pointer-events: none; }
+.board[data-tool="text"] { cursor: text; }
+.board[data-tool="lasso"] { cursor: default; }
+.hint { font-size: 13px; color: var(--muted); text-align: center; margin: 0; }
+
+.selbar { position: absolute; z-index: 5; display: flex; gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.selbar button { height: 38px; padding-inline: 12px; border: 0; border-radius: 8px; background: transparent; font-weight: 500; font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+.selbar button:hover { background: var(--surface-2); }
+.selbar svg { width: 17px; height: 17px; }
+.selbar .del { color: var(--danger); }
+
+.textedit { position: absolute; z-index: 4; margin: 0; padding: 0 2px; border: 1.5px dashed var(--accent); border-radius: 4px; background: transparent; outline: none; resize: none; overflow: hidden; white-space: pre; line-height: 1.25; font-family: var(--font-body); user-select: text; -webkit-user-select: text; touch-action: auto; }
 
 /* Popovers */
 .pop { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; width: min(330px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
-.pop h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.pop h3 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 700; text-align: center; }
+.pop h4 { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.toolpop { right: auto; width: min(320px, calc(100vw - 32px)); }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .seg button { border: 0; background: transparent; padding: 7px 12px; font-size: 13px; font-weight: 500; }
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.seg.full { display: flex; }
+.seg.full button { flex: 1; }
+.slider { display: grid; grid-template-columns: 64px 1fr 40px; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.slider input { width: 100%; accent-color: var(--accent); height: 28px; }
+.slider output { text-align: right; color: var(--text); font-weight: 600; }
+.swgrid { display: grid; grid-template-columns: repeat(auto-fill, 32px); gap: 8px; justify-content: space-between; }
+.preview { width: 100%; height: 64px; border-radius: 10px; border: 1px solid var(--line); display: block; }
 .note { font-size: 12.5px; color: var(--muted); margin: 0; }
 .menuitem { text-align: left; border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
 .menuitem:hover { border-color: var(--accent); }
@@ -131,7 +150,6 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   .btn .lbl { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
-.pop h4 { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -144,16 +162,16 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     <h1 class="month" id="title">October<span class="yr">2026</span></h1>
     <button class="pill" id="today">Today</button>
     <div class="spacer"></div>
-    <span class="status" id="status" data-s="connecting"><i></i><span id="statusText">Connecting…</span></span>
+    <span class="status" id="status" data-s="connecting"><i></i><span id="statusText">Opening…</span></span>
     <div class="menuwrap">
       <button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg><span class="lbl">Export</span></button>
       <div class="pop" id="exportPop" hidden>
         <h3>Export</h3>
-        <button class="menuitem" id="exPng"><strong>This month as an image</strong><span>PNG with your writing</span></button>
-        <button class="menuitem" id="exPdf"><strong>This month as a PDF</strong><span>A4 landscape, with your writing</span></button>
+        <button class="menuitem" id="exPng"><strong>This month as an image</strong><span>PNG with your writing and notes</span></button>
+        <button class="menuitem" id="exPdf"><strong>This month as a PDF</strong><span>A4 landscape, with your writing and notes</span></button>
         <button class="menuitem" id="exYear"><strong id="exYearTitle">Blank 2026 planner (PDF)</strong><span>12 pages with dates printed, ready for GoodNotes, Notability or printing</span></button>
         <h4>Backup</h4>
-        <p class="note">Your writing lives only on this device. Save a backup now and then, and before you clear browser data or change tablets.</p>
+        <p class="note">Your writing lives only on this device. Save a backup now and then, and before you clear app data or change tablets.</p>
         <button class="menuitem" id="backup"><strong>Save a backup file</strong><span>All months, as one .json file</span></button>
         <button class="menuitem" id="restore"><strong>Restore from a backup</strong><span>Replaces the months that are in the file</span></button>
         <input type="file" id="restoreFile" accept=".json,application/json" hidden>
@@ -176,23 +194,23 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     </div>
   </header>
 
-  <div class="tools" role="toolbar" aria-label="Writing tools">
-    <div class="group">
-      <button class="tool" id="tPen" aria-label="Pen" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.2-4.6L16.5 4.1a2 2 0 012.8 0l.6.6a2 2 0 010 2.8L8.6 18.8z"/><path d="M14.5 6l3.5 3.5"/></svg></button>
-      <button class="tool" id="tHl" aria-label="Highlighter" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 15l-2 2v3h3l2-2"/><path d="M9 15l7.5-10.5a1.6 1.6 0 012.3-.3l1 .8a1.6 1.6 0 01.2 2.3L12 18z"/><path d="M4 21h6"/></svg></button>
-      <button class="tool" id="tEr" aria-label="Eraser" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 20H20"/><path d="M4.6 14.4l8.8-8.8a2 2 0 012.8 0l2.2 2.2a2 2 0 010 2.8L10 19H7.4z"/><path d="M9 10l5 5"/></svg></button>
-    </div>
-    <div class="sep"></div>
-    <div class="group" id="swatches" aria-label="Colour"></div>
-    <div class="sep"></div>
-    <div class="group" id="sizes" aria-label="Thickness"></div>
-    <div class="sep"></div>
+  <div class="tools" id="tools" role="toolbar" aria-label="Writing tools">
     <div class="group">
       <button class="tool" id="undo" aria-label="Undo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg></button>
       <button class="tool" id="redo" aria-label="Redo" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 000 11H13"/></svg></button>
     </div>
+    <div class="sep"></div>
+    <div class="group">
+      <button class="tool" data-tool="pen" aria-label="Pen. Tap again for pen settings" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l4 6-4 12-4-12z"/><path d="M8 9h8"/><circle cx="12" cy="12.5" r="1"/></svg></button>
+      <button class="tool" data-tool="hl" aria-label="Highlighter. Tap again for highlighter settings" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v6l2 3v9H7v-9l2-3z"/><path d="M7 12h10"/></svg></button>
+      <button class="tool" data-tool="eraser" aria-label="Eraser. Tap again for eraser settings" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 20H20"/><path d="M4.6 14.4l8.8-8.8a2 2 0 012.8 0l2.2 2.2a2 2 0 010 2.8L10 19H7.4z"/><path d="M9 10l5 5"/></svg></button>
+      <button class="tool" data-tool="lasso" aria-label="Lasso select. Circle writing to delete or move it" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2.6 2.6"><ellipse cx="12" cy="11" rx="8.5" ry="6.5"/></svg></button>
+      <button class="tool" data-tool="text" aria-label="Text. Tap the page to type" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 8.5h8M12 8.5v8"/></svg></button>
+    </div>
+    <div class="sep" id="quickSep"></div>
+    <div class="group" id="quick" aria-label="Quick colours"></div>
     <div class="spacer"></div>
-    <button class="toggle" id="penOnly" aria-pressed="false" title="When on, only the stylus writes. Your palm and fingers are ignored."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/></svg>Pen only</button>
+    <button class="toggle" id="penOnly" aria-pressed="false" title="When on, only the stylus writes. Fingers scroll the page and your palm is ignored."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/></svg>Pen only</button>
     <div class="menuwrap">
       <button class="toggle danger-text" id="clearBtn" aria-haspopup="true" aria-expanded="false">Clear month</button>
       <div class="pop" id="clearPop" hidden>
@@ -201,16 +219,22 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
         <div class="confirm"><button class="btn" id="clearNo">Keep it</button><button class="btn red" id="clearYes">Clear month</button></div>
       </div>
     </div>
+    <div class="pop toolpop" id="toolPop" hidden></div>
   </div>
 
   <div class="boardwrap" id="boardWrap">
-    <div class="board" id="board">
+    <div class="board" id="board" data-tool="pen">
       <canvas id="base" aria-label="Calendar page you can write on"></canvas>
       <canvas id="live" aria-hidden="true"></canvas>
+      <textarea class="textedit" id="textedit" hidden aria-label="Type your text" spellcheck="false"></textarea>
+      <div class="selbar" id="selbar" hidden>
+        <button id="selDup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2"/></svg>Duplicate</button>
+        <button id="selDel" class="del"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Delete</button>
+      </div>
       <span class="loading" id="loading">Loading your writing…</span>
     </div>
   </div>
-  <p class="hint" id="hint">Write straight into any day with your pen. The side button or eraser end of your stylus erases. Ctrl+Z undoes.</p>
+  <p class="hint" id="hint">Tap a tool again to change its size and colour. With Pen only on, scroll with your finger to reach the notes below the calendar.</p>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -218,46 +242,63 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 (() => {
   "use strict";
   // ---------- constants ----------
-  const VW = 3200, VH = 2160, HEAD = 120;          // virtual page; ink is stored in these units
+  // Virtual page: ink is stored in these units. The calendar fills 0..VH_CAL, the notes area sits below it.
+  const VW = 3200, VH_CAL = 2160, NOTES_H = 860, VH = VH_CAL + NOTES_H, HEAD = 120, NOTES_ROW = 9;
   const DISPLAY = '"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif';
+  const BODY = '"Figtree", "Segoe UI", system-ui, sans-serif';
   const NAMES = {
-    en: { months: ["January","February","March","April","May","June","July","August","September","October","November","December"], days: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"] },
-    id: { months: ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"], days: ["Min","Sen","Sel","Rab","Kam","Jum","Sab"] },
+    en: { months: ["January","February","March","April","May","June","July","August","September","October","November","December"], days: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], notes: "Notes" },
+    id: { months: ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"], days: ["Min","Sen","Sel","Rab","Kam","Jum","Sab"], notes: "Catatan" },
   };
   const PAL = {
     light: {
       paper: "#ffffff", head: "#f5f6f9", rule: "#d6dae3", ruleStrong: "#b8bfcd", faint: "#e9ecf2",
       text: "#1b1f2a", muted: "#7e8698", sun: "#cf2f3d", dimFill: "#f6f7f9", dimText: "#c4c9d4",
-      accent: "#2449d8", accentText: "#ffffff",
-      ink: { ink: "#1d2230", blue: "#2449d8", red: "#d02f3b", green: "#1f8a4c", purple: "#7b3fc4" },
-      hl: { yellow: "rgba(255,210,0,.42)", pink: "rgba(255,90,160,.32)", mint: "rgba(40,215,130,.32)" },
+      accent: "#2449d8", accentText: "#ffffff", autoInk: "#1d2230",
     },
     dark: {
       paper: "#1b1f29", head: "#20252f", rule: "#343b4b", ruleStrong: "#4a5366", faint: "#262b37",
       text: "#e8ebf2", muted: "#848da1", sun: "#ff7d86", dimFill: "#171a22", dimText: "#4a5163",
-      accent: "#8ea6ff", accentText: "#10142a",
-      ink: { ink: "#eef0f6", blue: "#8ea6ff", red: "#ff7d86", green: "#62d699", purple: "#c7a2ff" },
-      hl: { yellow: "rgba(255,214,10,.30)", pink: "rgba(255,110,170,.30)", mint: "rgba(70,230,150,.26)" },
+      accent: "#8ea6ff", accentText: "#10142a", autoInk: "#eef0f6",
     },
   };
-  const PEN_COLORS = ["ink", "blue", "red", "green", "purple"];
-  const HL_COLORS = ["yellow", "pink", "mint"];
-  const COLOR_LABEL = { ink: "Black", blue: "Blue", red: "Red", green: "Green", purple: "Purple", yellow: "Yellow", pink: "Pink", mint: "Mint" };
-  const PEN_SIZES = [5, 8, 13];
-  const HL_SIZES = [30, 48];
-  const ERASER_R = 34;
+  // "auto" is black on a light page and white on a dark one.
+  const PEN_COLORS = ["auto", "#2449d8", "#0ea5e9", "#0f9f8f", "#1f8a4c", "#7cc022", "#e6b400", "#f97316", "#d02f3b", "#e8457c", "#7b3fc4", "#8b5e3c", "#6b7280", "#ffffff"];
+  const HL_COLORS = ["#ffd200", "#ff9f1c", "#ff5aa0", "#ff6b6b", "#b98cff", "#4cc9f0", "#28d782", "#a3e635"];
+  const COLOR_NAMES = { auto: "Ink (black, or white in dark mode)", "#2449d8": "Blue", "#0ea5e9": "Sky", "#0f9f8f": "Teal", "#1f8a4c": "Green", "#7cc022": "Lime", "#e6b400": "Mustard", "#f97316": "Orange", "#d02f3b": "Red", "#e8457c": "Pink", "#7b3fc4": "Purple", "#8b5e3c": "Brown", "#6b7280": "Grey", "#ffffff": "White", "#ffd200": "Yellow", "#ff9f1c": "Orange", "#ff5aa0": "Pink", "#ff6b6b": "Coral", "#b98cff": "Lavender", "#4cc9f0": "Sky", "#28d782": "Mint", "#a3e635": "Lime" };
+  const LEGACY = { ink: "auto", blue: "#2449d8", red: "#d02f3b", green: "#1f8a4c", purple: "#7b3fc4", yellow: "#ffd200", pink: "#ff5aa0", mint: "#28d782" };
+  const PEN_TYPES = [["b", "Ballpoint"], ["f", "Fountain"], ["c", "Pencil"]];
 
   const $ = (id) => document.getElementById(id);
   const pad2 = (n) => String(n).padStart(2, "0");
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-  // ---------- prefs (per-device conveniences) ----------
+  // ---------- prefs (per-device) ----------
   const defaults = {
     weekStart: 0, lang: (navigator.language || "").toLowerCase().startsWith("id") ? "id" : "en",
-    lines: false, others: true, penOnly: null, tool: "pen", penColor: "ink", hlColor: "yellow", penSize: 1, hlSize: 0,
+    lines: false, others: true, penOnly: null, tool: "pen",
+    pen: { type: "f", size: 3, opacity: 100, color: "auto" },
+    hl: { size: 15, opacity: 40, color: "#ffd200", straight: false },
+    eraser: { mode: "stroke", size: 3 },
+    text: { size: 16, color: "auto", bold: false },
+    recent: { pen: ["auto", "#2449d8", "#d02f3b"], hl: ["#ffd200", "#ff5aa0", "#28d782"], text: ["auto", "#2449d8", "#d02f3b"] },
   };
-  let prefs = { ...defaults };
-  try { Object.assign(prefs, JSON.parse(localStorage.getItem("inkcal:prefs") || "{}")); } catch (e) {}
+  const prefs = JSON.parse(JSON.stringify(defaults));
+  try {
+    const saved = JSON.parse(localStorage.getItem("inkcal:prefs") || "{}");
+    for (const k of Object.keys(saved)) {
+      if (defaults[k] && typeof defaults[k] === "object") Object.assign(prefs[k], saved[k] || {});
+      else if (k in defaults) prefs[k] = saved[k];
+    }
+  } catch (e) {}
+  if (!["pen", "hl", "eraser", "lasso", "text"].includes(prefs.tool)) prefs.tool = "pen";
   function savePrefs() { try { localStorage.setItem("inkcal:prefs", JSON.stringify(prefs)); } catch (e) {} }
+
+  // size sliders -> virtual units
+  const penWidth = (v) => 3 + v * 2;
+  const hlWidth = (v) => v * 2;
+  const eraserR = (v) => 12 + v * 10;
+  const textPx = (v) => v * 3;
 
   // ---------- theme ----------
   const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
@@ -268,18 +309,29 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     return !!(mq && mq.matches);
   }
   let P = isDark() ? PAL.dark : PAL.light;
-  function onTheme() { P = isDark() ? PAL.dark : PAL.light; renderTools(); renderBase(); }
+  function onTheme() { P = isDark() ? PAL.dark : PAL.light; renderQuick(); if (!$("toolPop").hidden) buildToolPop(); renderBase(); drawOverlay(); }
   if (mq && mq.addEventListener) mq.addEventListener("change", onTheme);
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  function colorOf(pal, c) { if (c === "auto") return pal.autoInk; if (LEGACY[c]) return c === "ink" ? pal.autoInk : LEGACY[c]; return c; }
+  function rgba(hex, a) {
+    const h = hex.replace("#", "");
+    const n = parseInt(h.length === 3 ? h.split("").map((x) => x + x).join("") : h, 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
 
   // ---------- calendar geometry ----------
   function geom(y, m, ws) {
     const off = (new Date(y, m, 1).getDay() - ws + 7) % 7;
     const dim = new Date(y, m + 1, 0).getDate();
     const rows = Math.ceil((off + dim) / 7);
-    return { off, dim, rows, cw: VW / 7, rh: (VH - HEAD) / rows };
+    return { off, dim, rows, cw: VW / 7, rh: (VH_CAL - HEAD) / rows };
   }
-  function rowOf(yv, g) { return Math.max(0, Math.min(g.rows - 1, Math.floor((yv - HEAD) / g.rh))); }
+  function rowOf(yv) {
+    if (yv >= VH_CAL) return NOTES_ROW;
+    const g = geom(month.y, month.m, month.ws);
+    return clamp(Math.floor((yv - HEAD) / g.rh), 0, g.rows - 1);
+  }
 
   function drawGrid(ctx, pal, y, m, ws) {
     const g = geom(y, m, ws);
@@ -296,8 +348,17 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
       ctx.fillStyle = dow === 0 ? pal.sun : pal.muted;
       ctx.fillText(names.days[dow].toUpperCase(), c * g.cw + g.cw / 2, HEAD / 2 + 2);
     }
-    if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
 
+    // notes area
+    ctx.fillStyle = pal.head; ctx.fillRect(0, VH_CAL, VW, 110);
+    ctx.textAlign = "left"; ctx.fillStyle = pal.muted;
+    ctx.fillText(names.notes.toUpperCase(), 60, VH_CAL + 57);
+    if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
+    ctx.strokeStyle = pal.faint; ctx.lineWidth = 2; ctx.beginPath();
+    for (let ly = VH_CAL + 110 + 96; ly < VH - 30; ly += 96) { ctx.moveTo(60, ly); ctx.lineTo(VW - 60, ly); }
+    ctx.stroke();
+
+    ctx.textAlign = "center";
     for (let r = 0; r < g.rows; r++) {
       for (let c = 0; c < 7; c++) {
         const i = r * 7 + c, dayNum = i - g.off + 1;
@@ -325,17 +386,28 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
       }
     }
     ctx.strokeStyle = pal.rule; ctx.lineWidth = 2; ctx.beginPath();
-    for (let c = 1; c < 7; c++) { ctx.moveTo(c * g.cw, 0); ctx.lineTo(c * g.cw, VH); }
+    for (let c = 1; c < 7; c++) { ctx.moveTo(c * g.cw, 0); ctx.lineTo(c * g.cw, VH_CAL); }
     for (let r = 1; r < g.rows; r++) { ctx.moveTo(0, HEAD + r * g.rh); ctx.lineTo(VW, HEAD + r * g.rh); }
     ctx.stroke();
     ctx.strokeStyle = pal.ruleStrong; ctx.lineWidth = 3; ctx.beginPath();
-    ctx.moveTo(0, HEAD); ctx.lineTo(VW, HEAD); ctx.stroke();
+    ctx.moveTo(0, HEAD); ctx.lineTo(VW, HEAD);
+    ctx.moveTo(0, VH_CAL); ctx.lineTo(VW, VH_CAL);
+    ctx.moveTo(0, VH_CAL + 110); ctx.lineTo(VW, VH_CAL + 110);
+    ctx.stroke();
     ctx.strokeRect(1.5, 1.5, VW - 3, VH - 3);
   }
 
-  // ---------- strokes ----------
+  // ---------- items: strokes and text ----------
+  // stroke: {k:'p'|'h', c, w, a, pt, pts:[[x,y,pressure]], bb, r}
+  // text:   {k:'t', c, w (font px), b (bold), x, y, t, bb, r}
   const mid = (a, b) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-  const penW = (s, p) => s.w * (0.45 + (p / 100) * 1.1);
+  function penW(s, p) {
+    const q = p / 100;
+    if (s.pt === "b") return s.w * (0.85 + 0.3 * q);
+    if (s.pt === "f") return s.w * (0.3 + 1.5 * q);
+    return s.w * (0.45 + 1.1 * q);
+  }
+  const isPathStroke = (s) => s.k === "h" || s.pt === "c" || (s.a != null && s.a < 1);
 
   function penSeg(ctx, s, i) {
     const pts = s.pts, p0 = pts[i - 1], p1 = pts[i];
@@ -343,8 +415,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     ctx.lineWidth = penW(s, (p0[2] + p1[2]) / 2);
     ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.quadraticCurveTo(p0[0], p0[1], b[0], b[1]); ctx.stroke();
   }
-  function hlPath(ctx, s) {
-    const pts = s.pts;
+  function smoothPath(ctx, pts) {
     ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
     if (pts.length === 1) { ctx.lineTo(pts[0][0] + 0.1, pts[0][1]); return; }
     for (let i = 1; i < pts.length - 1; i++) { const b = mid(pts[i], pts[i + 1]); ctx.quadraticCurveTo(pts[i][0], pts[i][1], b[0], b[1]); }
@@ -353,48 +424,110 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   function drawStroke(ctx, pal, s) {
     const pts = s.pts; if (!pts.length) return;
     ctx.lineCap = "round"; ctx.lineJoin = "round";
-    if (s.k === "h") {
-      ctx.strokeStyle = pal.hl[s.c] || pal.hl.yellow; ctx.lineWidth = s.w; hlPath(ctx, s); ctx.stroke(); return;
+    const col = colorOf(pal, s.c);
+    if (isPathStroke(s)) {
+      // one path at an even width, so translucent ink doesn't darken where segments overlap
+      const a = s.k === "h" ? (s.a ?? 0.4) : s.pt === "c" ? (s.a ?? 1) * 0.78 : s.a;
+      ctx.strokeStyle = rgba(col, a);
+      ctx.lineWidth = s.k === "h" ? s.w : s.pt === "c" ? s.w * 0.8 : s.w;
+      smoothPath(ctx, pts); ctx.stroke(); return;
     }
-    const col = pal.ink[s.c] || pal.ink.ink;
     ctx.strokeStyle = col; ctx.fillStyle = col;
     if (pts.length === 1) { ctx.beginPath(); ctx.arc(pts[0][0], pts[0][1], penW(s, pts[0][2]) / 2, 0, Math.PI * 2); ctx.fill(); return; }
     for (let i = 1; i < pts.length; i++) penSeg(ctx, s, i);
     const n = pts.length, a = mid(pts[n - 2], pts[n - 1]);
     ctx.lineWidth = penW(s, pts[n - 1][2]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(pts[n - 1][0], pts[n - 1][1]); ctx.stroke();
   }
-  function bbox(s) {
+  const textFont = (t) => `${t.b ? 700 : 500} ${t.w}px ${BODY}`;
+  const measureCtx = document.createElement("canvas").getContext("2d");
+  function textBox(t) {
+    measureCtx.font = textFont(t);
+    const lines = t.t.split("\n");
+    const w = Math.max(10, ...lines.map((l) => measureCtx.measureText(l).width));
+    t.bb = [t.x, t.y, t.x + w, t.y + lines.length * t.w * 1.25];
+  }
+  function drawText(ctx, pal, t) {
+    ctx.font = textFont(t); ctx.fillStyle = colorOf(pal, t.c);
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    t.t.split("\n").forEach((line, i) => ctx.fillText(line, t.x, t.y + i * t.w * 1.25 + t.w * 0.1));
+  }
+  function drawItem(ctx, pal, it) { if (it.k === "t") drawText(ctx, pal, it); else drawStroke(ctx, pal, it); }
+
+  function bbox(it) {
+    if (it.k === "t") { textBox(it); return; }
     let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
-    for (const p of s.pts) { if (p[0] < a) a = p[0]; if (p[1] < b) b = p[1]; if (p[0] > c) c = p[0]; if (p[1] > d) d = p[1]; }
-    s.bb = [a, b, c, d];
+    for (const p of it.pts) { if (p[0] < a) a = p[0]; if (p[1] < b) b = p[1]; if (p[0] > c) c = p[0]; if (p[1] > d) d = p[1]; }
+    it.bb = [a, b, c, d];
+  }
+  function finish(it) { bbox(it); it.r = rowOf(it.k === "t" ? it.y : it.pts[0][1]); return it; }
+  function moved(it, dx, dy) {
+    const c = { ...it };
+    if (it.k === "t") { c.x = it.x + dx; c.y = it.y + dy; }
+    else c.pts = it.pts.map(([x, y, p]) => [Math.round(x + dx), Math.round(y + dy), p]);
+    return finish(c);
   }
   function segDist2(x, y, a, b) {
     const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
-    let t = L ? ((x - a[0]) * dx + (y - a[1]) * dy) / L : 0; t = Math.max(0, Math.min(1, t));
+    let t = L ? ((x - a[0]) * dx + (y - a[1]) * dy) / L : 0; t = clamp(t, 0, 1);
     const px = a[0] + t * dx - x, py = a[1] + t * dy - y; return px * px + py * py;
   }
-  function hits(s, x, y) {
-    const b = s.bb, pad = ERASER_R + s.w;
+  function hits(it, x, y, R) {
+    const b = it.bb, pad = R + (it.w || 0);
     if (x < b[0] - pad || x > b[2] + pad || y < b[1] - pad || y > b[3] + pad) return false;
-    const rr = (ERASER_R + s.w / 2) ** 2, pts = s.pts;
+    if (it.k === "t") return x > b[0] - R && x < b[2] + R && y > b[1] - R && y < b[3] + R;
+    const rr = (R + it.w / 2) ** 2, pts = it.pts;
     if (pts.length === 1) return (pts[0][0] - x) ** 2 + (pts[0][1] - y) ** 2 < rr;
     for (let i = 1; i < pts.length; i++) if (segDist2(x, y, pts[i - 1], pts[i]) < rr) return true;
     return false;
   }
-  // compact delta encoding: [x, y, p, dx, dy, dp, ...] as integers
-  function enc(s) {
+  // Rub out only the part of a stroke under the eraser. Returns null when nothing changes.
+  function splitStroke(s, x, y, R) {
+    const rr = (R + s.w / 2) ** 2, runs = []; let cur = [], cut = false;
+    for (const p of s.pts) {
+      if ((p[0] - x) ** 2 + (p[1] - y) ** 2 < rr) { cut = true; if (cur.length) runs.push(cur); cur = []; }
+      else cur.push(p);
+    }
+    if (cur.length) runs.push(cur);
+    if (!cut) return null;
+    return runs.map((pts) => finish({ ...s, pts }));
+  }
+  function densify(a, b) {
+    const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 10)), out = [];
+    for (let i = 0; i <= n; i++) out.push([Math.round(a[0] + (b[0] - a[0]) * i / n), Math.round(a[1] + (b[1] - a[1]) * i / n), a[2]]);
+    return out;
+  }
+  function pointInPoly(x, y, poly) {
+    let inside = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const [xi, yi] = poly[i], [xj, yj] = poly[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+
+  // compact storage encoding; stroke points are delta-encoded integers
+  function enc(it) {
+    if (it.k === "t") return { k: "t", c: it.c, w: it.w, b: it.b ? 1 : 0, x: Math.round(it.x), y: Math.round(it.y), t: it.t };
     const d = []; let px = 0, py = 0, pp = 0;
-    for (const [x, y, p] of s.pts) { d.push(x - px, y - py, p - pp); px = x; py = y; pp = p; }
-    return { k: s.k, c: s.c, w: s.w, d };
+    for (const [x, y, p] of it.pts) { d.push(x - px, y - py, p - pp); px = x; py = y; pp = p; }
+    const o = { k: it.k, c: it.c, w: it.w, d };
+    if (it.a != null) o.a = it.a;
+    if (it.pt) o.pt = it.pt;
+    return o;
   }
   function dec(o, r) {
+    const c = LEGACY[o.c] || String(o.c || "auto");
+    if (o.k === "t") { const t = { k: "t", c, w: Number(o.w) || 48, b: !!o.b, x: Number(o.x) || 0, y: Number(o.y) || 0, t: String(o.t || ""), r }; textBox(t); return t; }
     const pts = []; let x = 0, y = 0, p = 0; const d = Array.isArray(o.d) ? o.d : [];
     for (let i = 0; i + 2 < d.length; i += 3) { x += d[i]; y += d[i + 1]; p += d[i + 2]; pts.push([x, y, p]); }
-    const s = { k: o.k === "h" ? "h" : "p", c: String(o.c || "ink"), w: Number(o.w) || 8, pts, r }; bbox(s); return s;
+    const s = { k: o.k === "h" ? "h" : "p", c, w: Number(o.w) || 8, pts, r };
+    if (o.a != null) s.a = Number(o.a);
+    if (o.pt) s.pt = String(o.pt);
+    bbox(s); return s;
   }
 
   // ---------- storage (IndexedDB on this device) ----------
-  // One record per month: { ws, rows: { [row]: [encodedStroke, ...] } }
+  // One record per month: { ws, rows: { [row]: [encodedItem, ...] } }; row 9 is the notes area.
   let store = { kind: "pending" };
   const memStore = {};
   let idbPromise = null;
@@ -433,10 +566,10 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
   async function loadMonthData(key) {
     const obj = store.kind === "idb" ? await idbGet(key) : memStore[key];
-    if (!obj) return { ws: null, strokes: [] };
-    const strokes = [];
-    for (const r of Object.keys(obj.rows || {})) for (const o of obj.rows[r]) strokes.push(dec(o, Number(r)));
-    return { ws: obj.ws, strokes };
+    if (!obj) return { ws: null, items: [] };
+    const items = [];
+    for (const r of Object.keys(obj.rows || {})) for (const o of obj.rows[r]) items.push(dec(o, Number(r)));
+    return { ws: obj.ws, items };
   }
 
   const chains = new Map(); let inflight = 0, saveError = false;
@@ -477,6 +610,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   let month = null, loadToken = 0;
   let undoStack = [], redoStack = [];
   let dirty = new Set(), saveTimer = null;
+  const hidden = new Set(); // items not drawn on the page right now (being moved or edited)
 
   function keyOf(y, m) { return `${y}-${pad2(m + 1)}`; }
   function markDirty(r) { dirty.add(r); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 1200); updateStatus(); }
@@ -485,28 +619,28 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     clearTimeout(saveTimer);
     if (!month || !month.loaded || !dirty.size) return;
     const rows = [...dirty]; dirty.clear();
-    for (const r of rows) queueWrite(month.key, month.ws, r, month.strokes.filter((s) => s.r === r).map(enc));
+    for (const r of rows) queueWrite(month.key, month.ws, r, month.items.filter((s) => s.r === r).map(enc));
   }
 
   function goto(y, m) {
+    commitText(); clearSel();
     flush();
     if (m < 0) { y--; m = 11; } if (m > 11) { y++; m = 0; }
-    month = { y, m, key: keyOf(y, m), ws: prefs.weekStart, strokes: [], loaded: false };
+    month = { y, m, key: keyOf(y, m), ws: prefs.weekStart, items: [], loaded: false };
     undoStack = []; redoStack = []; dirty = new Set();
     renderTitle(); updateUndo(); renderBase();
     loadCurrent();
   }
-  async function loadCurrent(silent) {
+  async function loadCurrent() {
     const tok = ++loadToken, mo = month;
-    if (!silent) $("loading").hidden = false;
+    $("loading").hidden = false;
     await storeReady; updateStatus();
     let data;
     try { data = await loadMonthData(mo.key); }
-    catch (e) { data = { ws: null, strokes: [] }; toast("Couldn't load this month's writing. Check your connection and reopen the month."); }
+    catch (e) { data = { ws: null, items: [] }; toast("Couldn't load this month's writing. Reopen the month to try again."); }
     if (tok !== loadToken || mo !== month) return;
-    const drawnMeanwhile = silent ? [] : mo.strokes;
-    if (data.strokes.length && (data.ws === 0 || data.ws === 1)) mo.ws = data.ws;
-    mo.strokes = data.strokes.concat(drawnMeanwhile);
+    if (data.items.length && (data.ws === 0 || data.ws === 1)) mo.ws = data.ws;
+    mo.items = data.items.concat(mo.items);
     mo.loaded = true;
     $("loading").hidden = true;
     renderBase();
@@ -517,33 +651,131 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   const board = $("board"), base = $("base"), live = $("live");
   const bctx = base.getContext("2d"), lctx = live.getContext("2d");
   let scale = 1;
+  const cssScale = () => board.clientWidth / VW;
   function fit() {
     const wrap = $("boardWrap");
     const availW = wrap.clientWidth;
     const top = wrap.getBoundingClientRect().top + window.scrollY;
-    const availH = Math.max(280, window.innerHeight - top - 52);
-    let w = availW < 720 ? availW : Math.min(availW, availH * VW / VH);
+    const availH = Math.max(280, window.innerHeight - top - 24);
+    // the calendar part fits the screen; the notes area continues below it
+    let w = availW < 720 ? availW : Math.min(availW, availH * VW / VH_CAL);
     w = Math.floor(w); const h = Math.round(w * VH / VW);
     board.style.width = w + "px"; board.style.height = h + "px";
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
     for (const c of [base, live]) { c.width = Math.round(w * dpr); c.height = Math.round(h * dpr); }
     scale = base.width / VW;
-    renderBase(); clearLive();
+    renderBase(); drawOverlay(); placeTextEditor();
   }
   function setT(ctx) { ctx.setTransform(scale, 0, 0, scale, 0, 0); }
   function renderBase() {
     if (!month) return;
     setT(bctx);
     drawGrid(bctx, P, month.y, month.m, month.ws);
-    for (const s of month.strokes) drawStroke(bctx, P, s);
+    for (const it of month.items) if (!hidden.has(it)) drawItem(bctx, P, it);
   }
   let baseQueued = false;
   function queueBase() { if (baseQueued) return; baseQueued = true; requestAnimationFrame(() => { baseQueued = false; renderBase(); }); }
   function clearLive() { lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, live.width, live.height); }
 
+  // ---------- undo: every change is "remove these items, add those" ----------
+  function swap(remove, add) {
+    if (remove.length) { const set = new Set(remove); month.items = month.items.filter((it) => !set.has(it)); }
+    month.items.push(...add);
+    for (const it of remove) markDirty(it.r);
+    for (const it of add) markDirty(it.r);
+  }
+  function commitOp(remove, add) {
+    if (!remove.length && !add.length) return;
+    undoStack.push({ remove, add }); if (undoStack.length > 300) undoStack.shift();
+    redoStack = []; updateUndo();
+  }
+  function doOp(remove, add) { swap(remove, add); commitOp(remove, add); renderBase(); }
+  function undo() { commitText(); clearSel(); const op = undoStack.pop(); if (!op) return; swap(op.add, op.remove); redoStack.push(op); updateUndo(); renderBase(); }
+  function redo() { commitText(); clearSel(); const op = redoStack.pop(); if (!op) return; swap(op.remove, op.add); undoStack.push(op); updateUndo(); renderBase(); }
+  function updateUndo() { $("undo").disabled = !undoStack.length; $("redo").disabled = !redoStack.length; }
+  $("undo").onclick = undo; $("redo").onclick = redo;
+
+  // ---------- selection (lasso) ----------
+  let sel = null; // {items, bb}
+  function selBox(items) {
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const it of items) { a = Math.min(a, it.bb[0]); b = Math.min(b, it.bb[1]); c = Math.max(c, it.bb[2]); d = Math.max(d, it.bb[3]); }
+    return [a - 20, b - 20, c + 20, d + 20];
+  }
+  function setSel(items) {
+    sel = items.length ? { items, bb: selBox(items) } : null;
+    drawOverlay(); placeSelbar();
+  }
+  function clearSel() { if (!sel) return; sel = null; drawOverlay(); placeSelbar(); }
+  function placeSelbar() {
+    const bar = $("selbar");
+    if (!sel || moveState) { bar.hidden = true; return; }
+    bar.hidden = false;
+    const cs = cssScale();
+    const bw = bar.offsetWidth || 220, bh = bar.offsetHeight || 46;
+    let left = clamp(sel.bb[0] * cs, 4, board.clientWidth - bw - 4);
+    let top = sel.bb[1] * cs - bh - 8;
+    if (top < 4) top = sel.bb[3] * cs + 8;
+    bar.style.left = left + "px"; bar.style.top = clamp(top, 4, board.clientHeight - bh - 4) + "px";
+  }
+  function drawOverlay(extra) {
+    clearLive(); setT(lctx);
+    if (moveState) for (const it of moveState.preview) drawItem(lctx, P, it);
+    if (sel) {
+      const [a, b, c, d] = moveState ? moveState.bb : sel.bb;
+      lctx.save();
+      lctx.fillStyle = rgba(P.accent, 0.06); lctx.fillRect(a, b, c - a, d - b);
+      lctx.setLineDash([18, 12]); lctx.lineWidth = 4; lctx.strokeStyle = P.accent;
+      lctx.strokeRect(a, b, c - a, d - b);
+      lctx.restore();
+    }
+    if (extra) extra();
+  }
+  $("selDel").onclick = () => { if (!sel) return; const items = sel.items; clearSel(); doOp(items, []); toast(`Deleted ${items.length === 1 ? "1 item" : items.length + " items"}. Undo brings it back.`); };
+  $("selDup").onclick = () => { if (!sel) return; const copies = sel.items.map((it) => moved(it, 40, 40)); doOp([], copies); setSel(copies); };
+
+  // ---------- text editing ----------
+  const ta = $("textedit");
+  let editing = null; // {orig, x, y, c, w, b}
+  function placeTextEditor() {
+    if (!editing) return;
+    const cs = cssScale();
+    ta.style.left = editing.x * cs - 3 + "px";
+    ta.style.top = editing.y * cs + "px";
+    ta.style.fontSize = editing.w * cs + "px";
+    ta.style.fontWeight = editing.b ? 700 : 500;
+    ta.style.color = colorOf(P, editing.c);
+    measureCtx.font = `${editing.b ? 700 : 500} ${editing.w * cs}px ${BODY}`;
+    const lines = ta.value.split("\n");
+    const w = Math.max(...lines.map((l) => measureCtx.measureText(l).width), editing.w * cs * 4);
+    ta.style.width = Math.min(w + 12, board.clientWidth - editing.x * cs) + "px";
+    ta.style.height = lines.length * editing.w * cs * 1.25 + 6 + "px";
+  }
+  function startEdit(orig, x, y) {
+    const st = orig || { c: prefs.text.color, w: textPx(prefs.text.size), b: prefs.text.bold };
+    editing = { orig, x: orig ? orig.x : x, y: orig ? orig.y : y, c: st.c, w: st.w, b: st.b };
+    if (orig) { hidden.add(orig); renderBase(); }
+    ta.value = orig ? orig.t : "";
+    ta.hidden = false; placeTextEditor();
+    ta.focus();
+  }
+  function commitText() {
+    if (!editing) return;
+    const e = editing; editing = null;
+    ta.hidden = true; ta.blur();
+    if (e.orig) hidden.delete(e.orig);
+    const val = ta.value.replace(/\s+$/, "");
+    if (!val) { if (e.orig) doOp([e.orig], []); else renderBase(); return; }
+    if (e.orig && e.orig.t === val && e.orig.c === e.c && e.orig.w === e.w && e.orig.b === e.b) { renderBase(); return; }
+    const item = finish({ k: "t", c: e.c, w: e.w, b: e.b, x: e.x, y: e.y, t: val });
+    doOp(e.orig ? [e.orig] : [], [item]);
+  }
+  ta.addEventListener("input", placeTextEditor);
+  ta.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.preventDefault(); commitText(); } });
+  ta.addEventListener("blur", () => setTimeout(() => { if (editing && document.activeElement !== ta) commitText(); }, 0));
+
   // ---------- input ----------
-  let active = null; // {id, mode:'draw'|'erase', s, removed}
-  let penSeen = false;
+  let active = null, pan = null, moveState = null, penSeen = false;
   function toV(e) {
     const r = live.getBoundingClientRect();
     return [Math.round((e.clientX - r.left) * VW / r.width), Math.round((e.clientY - r.top) * VH / r.height)];
@@ -553,146 +785,354 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     return 50;
   }
   function eraseAt(x, y) {
-    const keep = [];
-    let changed = false;
-    for (const s of month.strokes) {
-      if (hits(s, x, y)) { active.removed.push(s); markDirty(s.r); changed = true; } else keep.push(s);
+    const R = eraserR(prefs.eraser.size), partial = prefs.eraser.mode === "partial";
+    let changed = false; const next = [];
+    for (const it of month.items) {
+      if (hidden.has(it) || !hits(it, x, y, R)) { next.push(it); continue; }
+      if (partial && it.k !== "t") {
+        const parts = splitStroke(it, x, y, R);
+        if (!parts) { next.push(it); continue; }
+        next.push(...parts); parts.forEach((p) => { active.created.add(p); markDirty(p.r); });
+      }
+      if (active.created.has(it)) active.created.delete(it); else active.removed.push(it);
+      markDirty(it.r); changed = true;
     }
-    if (changed) { month.strokes = keep; queueBase(); }
+    if (changed) { month.items = next; queueBase(); }
   }
-  function drawEraserCursor(x, y) {
-    clearLive(); setT(lctx);
-    lctx.strokeStyle = P.muted; lctx.lineWidth = 3; lctx.beginPath(); lctx.arc(x, y, ERASER_R, 0, Math.PI * 2); lctx.stroke();
+  function eraserCursor(x, y) {
+    drawOverlay(() => {
+      lctx.strokeStyle = P.muted; lctx.lineWidth = 3; lctx.beginPath(); lctx.arc(x, y, eraserR(prefs.eraser.size), 0, Math.PI * 2); lctx.stroke();
+    });
+  }
+  function newStroke(x, y, p) {
+    if (prefs.tool === "hl") {
+      const h = prefs.hl;
+      return { k: "h", c: h.color, w: hlWidth(h.size), a: h.opacity / 100, st: h.straight, pts: [[x, y, p]] };
+    }
+    const pn = prefs.pen;
+    const s = { k: "p", c: pn.color, w: penWidth(pn.size), pt: pn.type, pts: [[x, y, p]] };
+    if (pn.opacity < 100) s.a = pn.opacity / 100;
+    return s;
   }
 
   live.addEventListener("pointerdown", (e) => {
     if (!month) return;
     if (e.pointerType === "pen" && !penSeen) {
       penSeen = true;
-      if (prefs.penOnly === null) { prefs.penOnly = true; savePrefs(); renderPenOnly(); toast("Stylus detected. Pen only is on, so your palm won't leave marks."); }
+      if (prefs.penOnly === null) { prefs.penOnly = true; savePrefs(); renderPenOnly(); toast("Stylus detected. Pen only is on: your palm won't leave marks and a finger scrolls."); }
     }
-    if (e.pointerType === "touch" && prefs.penOnly) return;
-    if (active) { if (e.pointerType === "pen" && active.type !== "pen") cancelActive(); else return; }
     e.preventDefault();
-    try { live.setPointerCapture(e.pointerId); } catch (err) {}
-    closePops();
-    const erasing = prefs.tool === "eraser" || (e.buttons & 32) === 32 || (e.pointerType === "pen" && (e.buttons & 2) === 2);
-    const [x, y] = toV(e);
-    if (erasing) {
-      active = { id: e.pointerId, type: e.pointerType, mode: "erase", removed: [] };
-      eraseAt(x, y); drawEraserCursor(x, y);
-    } else {
-      const hl = prefs.tool === "hl";
-      const s = { k: hl ? "h" : "p", c: hl ? prefs.hlColor : prefs.penColor, w: hl ? HL_SIZES[prefs.hlSize] || HL_SIZES[0] : PEN_SIZES[prefs.penSize] || PEN_SIZES[1], pts: [[x, y, pressureOf(e)]] };
-      active = { id: e.pointerId, type: e.pointerType, mode: "draw", s };
-      clearLive(); setT(lctx);
-      if (!hl) { lctx.fillStyle = P.ink[s.c]; lctx.beginPath(); lctx.arc(x, y, penW(s, s.pts[0][2]) / 2, 0, Math.PI * 2); lctx.fill(); }
+    if (e.pointerType === "touch" && prefs.penOnly) {
+      if (!pan && !active) { pan = { id: e.pointerId, y: e.clientY, sy: window.scrollY }; try { live.setPointerCapture(e.pointerId); } catch (err) {} }
+      return;
     }
+    if (active) { if (e.pointerType === "pen" && active.type !== "pen") cancelActive(); else return; }
+    closePops();
+    if (editing) { commitText(); return; }
+    try { live.setPointerCapture(e.pointerId); } catch (err) {}
+    const [x, y] = toV(e);
+    const base0 = { id: e.pointerId, type: e.pointerType };
+    const sideButton = (e.buttons & 32) === 32 || (e.pointerType === "pen" && (e.buttons & 2) === 2);
+
+    if (sideButton || prefs.tool === "eraser") {
+      clearSel();
+      active = { ...base0, mode: "erase", removed: [], created: new Set(), last: [x, y] };
+      eraseAt(x, y); eraserCursor(x, y); return;
+    }
+    if (prefs.tool === "lasso") {
+      if (sel && x > sel.bb[0] && x < sel.bb[2] && y > sel.bb[1] && y < sel.bb[3]) {
+        moveState = { start: [x, y], dx: 0, dy: 0, preview: sel.items, bb: sel.bb };
+        sel.items.forEach((it) => hidden.add(it)); renderBase(); placeSelbar(); drawOverlay();
+        active = { ...base0, mode: "move" }; return;
+      }
+      clearSel();
+      active = { ...base0, mode: "lasso", poly: [[x, y]] }; return;
+    }
+    if (prefs.tool === "text") { clearSel(); active = { ...base0, mode: "text", x, y }; return; }
+
+    clearSel();
+    const s = newStroke(x, y, pressureOf(e));
+    active = { ...base0, mode: "draw", s, start: [x, y, s.pts[0][2]] };
+    clearLive(); setT(lctx);
+    if (!isPathStroke(s)) { lctx.fillStyle = colorOf(P, s.c); lctx.beginPath(); lctx.arc(x, y, penW(s, s.pts[0][2]) / 2, 0, Math.PI * 2); lctx.fill(); }
   });
+
   live.addEventListener("pointermove", (e) => {
-    if (!active || e.pointerId !== active.id) return;
+    if (pan && e.pointerId === pan.id) { window.scrollTo(0, pan.sy - (e.clientY - pan.y)); return; }
+    if (!active || e.pointerId !== active.id) {
+      if (!active && prefs.tool === "eraser" && e.pointerType !== "touch") { const [x, y] = toV(e); eraserCursor(x, y); }
+      return;
+    }
     e.preventDefault();
     const evs = typeof e.getCoalescedEvents === "function" ? e.getCoalescedEvents() : [];
     const list = evs.length ? evs : [e];
+    const [lx, ly] = toV(e);
     if (active.mode === "erase") {
-      let last; for (const ev of list) { last = toV(ev); eraseAt(last[0], last[1]); }
-      drawEraserCursor(last[0], last[1]); return;
+      // fill in the path between samples so a fast swipe doesn't skip over ink
+      const step = eraserR(prefs.eraser.size) / 3;
+      for (const ev of list) {
+        const [x, y] = toV(ev), [px, py] = active.last;
+        const n = Math.max(1, Math.ceil(Math.hypot(x - px, y - py) / step));
+        for (let i = 1; i <= n; i++) eraseAt(px + (x - px) * i / n, py + (y - py) * i / n);
+        active.last = [x, y];
+      }
+      eraserCursor(lx, ly); return;
     }
-    const s = active.s; setT(lctx); lctx.lineCap = "round"; lctx.lineJoin = "round";
-    let added = false;
-    for (const ev of list) {
-      const [x, y] = toV(ev), prev = s.pts[s.pts.length - 1];
-      if ((x - prev[0]) ** 2 + (y - prev[1]) ** 2 < 4) continue;
-      s.pts.push([x, y, pressureOf(ev)]); added = true;
-      if (s.k === "p") { lctx.strokeStyle = P.ink[s.c]; penSeg(lctx, s, s.pts.length - 1); }
+    if (active.mode === "text") return;
+    if (active.mode === "move") {
+      const dx = lx - moveState.start[0], dy = ly - moveState.start[1];
+      moveState.dx = dx; moveState.dy = dy;
+      moveState.preview = sel.items.map((it) => moved(it, dx, dy));
+      moveState.bb = [sel.bb[0] + dx, sel.bb[1] + dy, sel.bb[2] + dx, sel.bb[3] + dy];
+      drawOverlay(); return;
     }
-    if (added && s.k === "h") { clearLive(); setT(lctx); lctx.lineCap = "round"; lctx.lineJoin = "round"; lctx.strokeStyle = P.hl[s.c]; lctx.lineWidth = s.w; hlPath(lctx, s); lctx.stroke(); }
+    if (active.mode === "lasso") {
+      for (const ev of list) active.poly.push(toV(ev));
+      drawOverlay(() => {
+        const poly = active.poly;
+        lctx.save(); lctx.setLineDash([16, 12]); lctx.lineWidth = 4; lctx.strokeStyle = P.accent; lctx.fillStyle = rgba(P.accent, 0.07);
+        lctx.beginPath(); lctx.moveTo(poly[0][0], poly[0][1]); for (const p of poly) lctx.lineTo(p[0], p[1]); lctx.closePath(); lctx.fill(); lctx.stroke(); lctx.restore();
+      });
+      return;
+    }
+    const s = active.s;
+    if (s.st) {
+      s.pts = [active.start, [lx, ly, active.start[2]]];
+    } else {
+      setT(lctx); lctx.lineCap = "round"; lctx.lineJoin = "round"; lctx.strokeStyle = colorOf(P, s.c);
+      for (const ev of list) {
+        const [x, y] = toV(ev), prev = s.pts[s.pts.length - 1];
+        if ((x - prev[0]) ** 2 + (y - prev[1]) ** 2 < 4) continue;
+        s.pts.push([x, y, pressureOf(ev)]);
+        if (!isPathStroke(s)) penSeg(lctx, s, s.pts.length - 1);
+      }
+    }
+    if (isPathStroke(s)) { clearLive(); setT(lctx); drawStroke(lctx, P, s); }
   });
+
   function endPointer(e) {
+    if (pan && e.pointerId === pan.id) { pan = null; return; }
     if (!active || e.pointerId !== active.id) return;
     const a = active; active = null;
     if (a.mode === "erase") {
-      clearLive();
-      if (a.removed.length) pushOp({ t: "erase", list: a.removed });
+      drawOverlay();
+      commitOp(a.removed, [...a.created]);
       return;
     }
-    const s = a.s; bbox(s);
-    s.r = rowOf(s.pts[0][1], geom(month.y, month.m, month.ws));
-    month.strokes.push(s);
-    setT(bctx); drawStroke(bctx, P, s); clearLive();
-    markDirty(s.r);
-    pushOp({ t: "add", s });
+    if (a.mode === "text") {
+      if (e.type === "pointercancel") return;
+      const hit = month.items.slice().reverse().find((it) => it.k === "t" && hits(it, a.x, a.y, 16));
+      startEdit(hit || null, a.x, a.y - textPx(prefs.text.size) * 0.6);
+      return;
+    }
+    if (a.mode === "move") {
+      const ms = moveState; moveState = null;
+      sel.items.forEach((it) => hidden.delete(it));
+      if (Math.abs(ms.dx) + Math.abs(ms.dy) < 3) { renderBase(); setSel(sel.items); return; }
+      const old = sel.items; doOp(old, ms.preview); setSel(ms.preview); return;
+    }
+    if (a.mode === "lasso") {
+      const poly = a.poly;
+      if (poly.length < 3) { setSel([]); return; }
+      const picked = month.items.filter((it) => {
+        if (it.k === "t") return pointInPoly((it.bb[0] + it.bb[2]) / 2, (it.bb[1] + it.bb[3]) / 2, poly);
+        let inside = 0; for (const p of it.pts) if (pointInPoly(p[0], p[1], poly)) inside++;
+        return inside / it.pts.length >= 0.6;
+      });
+      setSel(picked);
+      if (!picked.length) toast("Nothing inside the loop. Draw it around the writing you want to select.");
+      return;
+    }
+    const s = a.s;
+    if (s.st) s.pts = densify(s.pts[0], s.pts[s.pts.length - 1]);
+    delete s.st;
+    finish(s);
+    swap([], [s]); commitOp([], [s]);
+    setT(bctx); drawItem(bctx, P, s); clearLive();
   }
   function cancelActive() {
     if (!active) return;
-    if (active.mode === "erase" && active.removed.length) pushOp({ t: "erase", list: active.removed });
-    active = null; clearLive();
+    const a = active; active = null;
+    if (a.mode === "erase") commitOp(a.removed, [...a.created]);
+    if (a.mode === "move" && moveState) { moveState = null; sel.items.forEach((it) => hidden.delete(it)); renderBase(); }
+    drawOverlay(); placeSelbar();
   }
   live.addEventListener("pointerup", endPointer);
   live.addEventListener("pointercancel", endPointer);
-  live.addEventListener("pointerleave", () => { if (!active && prefs.tool === "eraser") clearLive(); });
+  live.addEventListener("pointerleave", () => { if (!active && prefs.tool === "eraser") drawOverlay(); });
   live.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  // ---------- undo ----------
-  function pushOp(op) { undoStack.push(op); if (undoStack.length > 200) undoStack.shift(); redoStack = []; updateUndo(); }
-  function removeStrokes(list) { const set = new Set(list); month.strokes = month.strokes.filter((s) => !set.has(s)); list.forEach((s) => markDirty(s.r)); }
-  function addStrokes(list) { month.strokes.push(...list); list.forEach((s) => markDirty(s.r)); }
-  function applyOp(op, reverse) {
-    const adds = op.t === "add" ? [op.s] : op.list;
-    if ((op.t === "add") !== reverse) addStrokes(adds); else removeStrokes(adds);
-    renderBase();
-  }
-  function undo() { const op = undoStack.pop(); if (!op) return; applyOp(op, true); redoStack.push(op); updateUndo(); }
-  function redo() { const op = redoStack.pop(); if (!op) return; applyOp(op, false); undoStack.push(op); updateUndo(); }
-  function updateUndo() { $("undo").disabled = !undoStack.length; $("redo").disabled = !redoStack.length; }
-  $("undo").onclick = undo; $("redo").onclick = redo;
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePops();
+    if (e.target === ta) return;
+    if (e.key === "Escape") { closePops(); clearSel(); }
+    if ((e.key === "Delete" || e.key === "Backspace") && sel) { e.preventDefault(); $("selDel").onclick(); return; }
     if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
     const k = e.key.toLowerCase();
     if (k === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
     else if ((k === "z" && e.shiftKey) || k === "y") { e.preventDefault(); redo(); }
   });
 
-  // ---------- UI ----------
-  function renderTitle() {
-    const names = NAMES[prefs.lang] || NAMES.en;
-    const t = $("title"); t.textContent = names.months[month.m];
-    const yr = document.createElement("span"); yr.className = "yr"; yr.textContent = month.y; t.appendChild(yr);
-    $("clearTitle").textContent = `Clear all writing in ${names.months[month.m]}?`;
-    $("exYearTitle").textContent = `Blank ${month.y} planner (PDF)`;
+  // ---------- toolbar ----------
+  const toolBtns = [...document.querySelectorAll(".tool[data-tool]")];
+  function renderToolBtns() {
+    for (const b of toolBtns) b.setAttribute("aria-pressed", String(b.dataset.tool === prefs.tool));
+    board.dataset.tool = prefs.tool;
   }
-  function renderTools() {
-    for (const [id, t] of [["tPen", "pen"], ["tHl", "hl"], ["tEr", "eraser"]]) $(id).setAttribute("aria-pressed", String(prefs.tool === t));
-    const sw = $("swatches"), sz = $("sizes"); sw.innerHTML = ""; sz.innerHTML = "";
-    const hl = prefs.tool === "hl", er = prefs.tool === "eraser";
-    sw.hidden = er; sz.hidden = er;
-    sw.previousElementSibling.hidden = er; sz.previousElementSibling.hidden = er;
-    if (er) return;
-    for (const c of hl ? HL_COLORS : PEN_COLORS) {
-      const b = document.createElement("button"); b.className = "sw";
-      b.style.background = hl ? P.hl[c].replace(/,\.\d+\)/, ",1)") : P.ink[c];
-      b.setAttribute("aria-label", COLOR_LABEL[c]); b.setAttribute("aria-pressed", String((hl ? prefs.hlColor : prefs.penColor) === c));
-      b.onclick = () => { if (hl) prefs.hlColor = c; else prefs.penColor = c; savePrefs(); renderTools(); };
-      sw.appendChild(b);
+  for (const b of toolBtns) {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      const t = b.dataset.tool;
+      if (prefs.tool === t) { if ($("toolPop").hidden) openToolPop(); else closeToolPop(); return; }
+      commitText(); clearSel(); closeToolPop();
+      prefs.tool = t; savePrefs(); renderToolBtns(); renderQuick(); drawOverlay();
+      if (t === "lasso") toast("Draw a loop around writing to select it. Then drag it, or tap Delete.");
+      if (t === "text") toast("Tap anywhere on the page to type.");
+    };
+  }
+  const colorKey = () => (prefs.tool === "pen" ? "pen" : prefs.tool === "hl" ? "hl" : prefs.tool === "text" ? "text" : null);
+  function swatch(c, pressed, onPick, hl) {
+    const b = document.createElement("button");
+    b.className = "sw" + (c === "auto" ? " auto" : "");
+    if (c !== "auto") b.style.background = hl ? rgba(c, 0.85) : c;
+    b.setAttribute("aria-label", COLOR_NAMES[c] || c);
+    b.setAttribute("aria-pressed", String(pressed));
+    b.onclick = (e) => { e.stopPropagation(); onPick(c); };
+    return b;
+  }
+  function pickColor(c) {
+    const k = colorKey(); if (!k) return;
+    prefs[k].color = c;
+    const rec = prefs.recent[k].filter((x) => x !== c); rec.unshift(c); prefs.recent[k] = rec.slice(0, 3);
+    if (editing && k === "text") { editing.c = c; placeTextEditor(); }
+    savePrefs(); renderQuick(); if (!$("toolPop").hidden) buildToolPop();
+  }
+  function renderQuick() {
+    const q = $("quick"); q.innerHTML = "";
+    const k = colorKey();
+    $("quickSep").hidden = !k; q.hidden = !k;
+    if (!k) return;
+    let rec = prefs.recent[k];
+    if (!rec.includes(prefs[k].color)) rec = [prefs[k].color, ...rec].slice(0, 3);
+    for (const c of rec) q.appendChild(swatch(c, prefs[k].color === c, pickColor, k === "hl"));
+  }
+
+  // per-tool settings popover
+  function openToolPop() { buildToolPop(); $("toolPop").hidden = false; positionToolPop(); }
+  function closeToolPop() { $("toolPop").hidden = true; }
+  function positionToolPop() {
+    const pop = $("toolPop"), btn = toolBtns.find((b) => b.dataset.tool === prefs.tool), tools = $("tools");
+    const left = clamp(btn.offsetLeft - 16, 0, tools.clientWidth - pop.offsetWidth);
+    pop.style.left = left + "px";
+  }
+  function slider(label, min, max, val, suffix, onInput) {
+    const wrap = document.createElement("label"); wrap.className = "slider";
+    const span = document.createElement("span"); span.textContent = label;
+    const input = document.createElement("input"); input.type = "range"; input.min = min; input.max = max; input.value = val;
+    const out = document.createElement("output"); out.className = "font-numeric"; out.textContent = val + suffix;
+    input.oninput = () => { out.textContent = input.value + suffix; onInput(Number(input.value)); };
+    wrap.append(span, input, out); return wrap;
+  }
+  function segment(options, cur, onPick) {
+    const seg = document.createElement("div"); seg.className = "seg full";
+    for (const [v, label] of options) {
+      const b = document.createElement("button"); b.textContent = label; b.setAttribute("aria-pressed", String(v === cur));
+      b.onclick = (e) => { e.stopPropagation(); onPick(v); };
+      seg.appendChild(b);
     }
-    const sizes = hl ? HL_SIZES : PEN_SIZES, cur = hl ? prefs.hlSize : prefs.penSize;
-    const labels = hl ? ["Thin highlighter", "Wide highlighter"] : ["Fine", "Medium", "Bold"];
-    sizes.forEach((v, i) => {
-      const b = document.createElement("button"); b.className = "size";
-      b.setAttribute("aria-label", labels[i]); b.setAttribute("aria-pressed", String(cur === i));
-      const dot = document.createElement("b"); const px = hl ? 10 + i * 6 : 4 + i * 4;
-      dot.style.width = dot.style.height = px + "px"; if (hl) dot.style.borderRadius = "3px";
-      b.appendChild(dot);
-      b.onclick = () => { if (hl) prefs.hlSize = i; else prefs.penSize = i; savePrefs(); renderTools(); };
-      sz.appendChild(b);
-    });
+    return seg;
   }
-  function setTool(t) { prefs.tool = t; savePrefs(); renderTools(); clearLive(); }
-  $("tPen").onclick = () => setTool("pen"); $("tHl").onclick = () => setTool("hl"); $("tEr").onclick = () => setTool("eraser");
+  function colorGrid(k) {
+    const grid = document.createElement("div"); grid.className = "swgrid";
+    const list = k === "hl" ? HL_COLORS : PEN_COLORS;
+    const cur = prefs[k].color;
+    for (const c of list) grid.appendChild(swatch(c, c === cur, pickColor, k === "hl"));
+    const custom = document.createElement("label"); custom.className = "sw custom"; custom.title = "Pick any colour";
+    custom.setAttribute("aria-pressed", String(!list.includes(cur)));
+    const input = document.createElement("input"); input.type = "color"; input.setAttribute("aria-label", "Pick any colour");
+    input.value = cur === "auto" ? "#1d2230" : cur;
+    input.onchange = () => pickColor(input.value.toLowerCase());
+    custom.appendChild(input); grid.appendChild(custom);
+    return grid;
+  }
+  // The preview shows the tool at the same scale it will appear on the page.
+  let preview = null; // {canvas, draw}
+  function paintPreview() {
+    if (!preview) return;
+    const c = preview.canvas;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3), w = c.clientWidth || 290, h = c.clientHeight || 64;
+    c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+    const ctx = c.getContext("2d"), cs = cssScale() || 0.3;
+    ctx.fillStyle = P.paper; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.setTransform(dpr * cs, 0, 0, dpr * cs, 0, 0);
+    preview.draw(ctx, w / cs, h / cs);
+  }
+  function previewCanvas(draw) {
+    const c = document.createElement("canvas"); c.className = "preview";
+    preview = { canvas: c, draw };
+    requestAnimationFrame(paintPreview);
+    return c;
+  }
+  function samplePts(W, H) {
+    const pts = [];
+    for (let i = 0; i <= 60; i++) { const t = i / 60; pts.push([W * 0.08 + t * W * 0.84, H / 2 + Math.sin(t * Math.PI * 2.4) * H * 0.22, Math.round(25 + 65 * Math.sin(t * Math.PI))]); }
+    return pts;
+  }
+  function buildToolPop() {
+    const pop = $("toolPop"); pop.innerHTML = ""; preview = null;
+    const h3 = document.createElement("h3"); pop.appendChild(h3);
+    const t = prefs.tool;
+    if (t === "pen") {
+      h3.textContent = PEN_TYPES.find(([v]) => v === prefs.pen.type)[1] + " pen";
+      const s = () => ({ k: "p", c: prefs.pen.color, w: penWidth(prefs.pen.size), pt: prefs.pen.type, a: prefs.pen.opacity < 100 ? prefs.pen.opacity / 100 : undefined });
+      pop.appendChild(previewCanvas((ctx, W, H) => drawStroke(ctx, P, { ...s(), pts: samplePts(W, H) })));
+      pop.appendChild(segment(PEN_TYPES, prefs.pen.type, (v) => { prefs.pen.type = v; savePrefs(); buildToolPop(); }));
+      pop.appendChild(slider("Size", 1, 20, prefs.pen.size, "", (v) => { prefs.pen.size = v; savePrefs(); refreshPreview(); }));
+      pop.appendChild(slider("Opacity", 10, 100, prefs.pen.opacity, "%", (v) => { prefs.pen.opacity = v; savePrefs(); refreshPreview(); }));
+      pop.appendChild(colorGrid("pen"));
+      if (prefs.pen.opacity < 100) { const n = document.createElement("p"); n.className = "note"; n.textContent = "See-through ink draws at an even width."; pop.appendChild(n); }
+    } else if (t === "hl") {
+      h3.textContent = "Highlighter";
+      const s = () => ({ k: "h", c: prefs.hl.color, w: hlWidth(prefs.hl.size), a: prefs.hl.opacity / 100 });
+      pop.appendChild(previewCanvas((ctx, W, H) => drawStroke(ctx, P, { ...s(), pts: prefs.hl.straight ? densify([W * 0.08, H / 2, 50], [W * 0.92, H / 2, 50]) : samplePts(W, H) })));
+      pop.appendChild(slider("Size", 5, 40, prefs.hl.size, "", (v) => { prefs.hl.size = v; savePrefs(); refreshPreview(); }));
+      pop.appendChild(slider("Opacity", 15, 100, prefs.hl.opacity, "%", (v) => { prefs.hl.opacity = v; savePrefs(); refreshPreview(); }));
+      pop.appendChild(colorGrid("hl"));
+      const row = document.createElement("div"); row.className = "row"; row.append("Straight lines");
+      row.appendChild(segment([[false, "Off"], [true, "On"]], prefs.hl.straight, (v) => { prefs.hl.straight = v; savePrefs(); buildToolPop(); }));
+      row.lastChild.classList.remove("full"); pop.appendChild(row);
+    } else if (t === "eraser") {
+      h3.textContent = "Eraser";
+      pop.appendChild(segment([["stroke", "Whole stroke"], ["partial", "Only what I rub"]], prefs.eraser.mode, (v) => { prefs.eraser.mode = v; savePrefs(); buildToolPop(); }));
+      pop.appendChild(slider("Size", 1, 10, prefs.eraser.size, "", (v) => { prefs.eraser.size = v; savePrefs(); }));
+      const n = document.createElement("p"); n.className = "note";
+      n.textContent = prefs.eraser.mode === "stroke" ? "Touching a stroke removes all of it. Text boxes are removed whole." : "Removes only the ink under the eraser and leaves the rest. Text boxes are removed whole.";
+      pop.appendChild(n);
+    } else if (t === "lasso") {
+      h3.textContent = "Lasso";
+      const n = document.createElement("p"); n.className = "note";
+      n.textContent = "Draw a loop around handwriting or text to select it. Drag inside the box to move it, or use Delete and Duplicate. Undo brings back anything you delete.";
+      pop.appendChild(n);
+    } else if (t === "text") {
+      h3.textContent = "Text";
+      const sample = () => finish({ k: "t", c: prefs.text.color, w: textPx(prefs.text.size), b: prefs.text.bold, x: 30, y: 0, t: "Meeting 10:00" });
+      pop.appendChild(previewCanvas((ctx, W, H) => { const it = sample(); it.y = (H - it.w * 1.25) / 2; drawText(ctx, P, it); }));
+      pop.appendChild(slider("Size", 8, 60, prefs.text.size, "", (v) => { prefs.text.size = v; savePrefs(); refreshPreview(); if (editing) { editing.w = textPx(v); placeTextEditor(); } }));
+      const row = document.createElement("div"); row.className = "row"; row.append("Bold");
+      row.appendChild(segment([[false, "Off"], [true, "On"]], prefs.text.bold, (v) => { prefs.text.bold = v; savePrefs(); if (editing) { editing.b = v; placeTextEditor(); } buildToolPop(); }));
+      row.lastChild.classList.remove("full"); pop.appendChild(row);
+      pop.appendChild(colorGrid("text"));
+    }
+    if (!pop.hidden) positionToolPop();
+  }
+  let previewQueued = false;
+  function refreshPreview() {
+    if (previewQueued) return; previewQueued = true;
+    requestAnimationFrame(() => { previewQueued = false; paintPreview(); });
+  }
+  $("toolPop").addEventListener("pointerdown", (e) => e.stopPropagation());
 
   function renderPenOnly() { $("penOnly").setAttribute("aria-pressed", String(!!prefs.penOnly)); }
-  $("penOnly").onclick = () => { prefs.penOnly = !prefs.penOnly; savePrefs(); renderPenOnly(); toast(prefs.penOnly ? "Pen only is on. Fingers and palm won't draw." : "Pen only is off. Fingers and mouse can draw too."); };
+  $("penOnly").onclick = () => { prefs.penOnly = !prefs.penOnly; savePrefs(); renderPenOnly(); toast(prefs.penOnly ? "Pen only is on. A finger scrolls; it doesn't draw." : "Pen only is off. Fingers and mouse can draw too."); };
 
   function updateStatus() {
     const el = $("status"), tx = $("statusText");
@@ -705,14 +1145,15 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     el.dataset.s = s; tx.textContent = t;
   }
 
-  // popovers
+  // header popovers
   const pops = [["exportBtn", "exportPop"], ["setBtn", "setPop"], ["clearBtn", "clearPop"]];
-  function closePops() { for (const [b, p] of pops) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); } }
+  function closePops() { for (const [b, p] of pops) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); } closeToolPop(); }
   for (const [b, p] of pops) {
     $(b).onclick = (e) => { e.stopPropagation(); const open = $(p).hidden; closePops(); if (open) { $(p).hidden = false; $(b).setAttribute("aria-expanded", "true"); if (p === "setPop") renderSettings(); if (p === "exportPop") $("restoreConfirm").hidden = true; } };
   }
   document.addEventListener("pointerdown", (e) => {
     for (const [b, p] of pops) if (!$(p).hidden && !$(p).contains(e.target) && !$(b).contains(e.target)) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); }
+    if (!$("toolPop").hidden && !$("toolPop").contains(e.target) && !toolBtns.some((b) => b.contains(e.target))) closeToolPop();
   });
 
   function bindSeg(id, get, set) {
@@ -723,7 +1164,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   const segRenders = [
     bindSeg("segWs", () => prefs.weekStart, (v) => {
       prefs.weekStart = Number(v);
-      if (month.strokes.length) toast("This month keeps its layout because you've written in it. Empty months use the new setting.");
+      if (month.items.length) toast("This month keeps its layout because you've written in it. Empty months use the new setting.");
       else { month.ws = prefs.weekStart; renderBase(); }
     }),
     bindSeg("segLang", () => prefs.lang, (v) => { prefs.lang = v; renderTitle(); renderBase(); }),
@@ -734,12 +1175,19 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
   $("clearNo").onclick = closePops;
   $("clearYes").onclick = () => {
-    closePops();
-    if (!month.strokes.length) { toast("There's no writing in this month yet."); return; }
-    const list = month.strokes.slice(); removeStrokes(list); renderBase(); pushOp({ t: "clear", list });
+    closePops(); commitText(); clearSel();
+    if (!month.items.length) { toast("There's no writing in this month yet."); return; }
+    doOp(month.items.slice(), []);
     toast("Month cleared. Press Undo to bring it back.");
   };
 
+  function renderTitle() {
+    const names = NAMES[prefs.lang] || NAMES.en;
+    const t = $("title"); t.textContent = names.months[month.m];
+    const yr = document.createElement("span"); yr.className = "yr"; yr.textContent = month.y; t.appendChild(yr);
+    $("clearTitle").textContent = `Clear all writing in ${names.months[month.m]}?`;
+    $("exYearTitle").textContent = `Blank ${month.y} planner (PDF)`;
+  }
   $("prev").onclick = () => goto(month.y, month.m - 1);
   $("next").onclick = () => goto(month.y, month.m + 1);
   $("today").onclick = () => goto(today.getFullYear(), today.getMonth());
@@ -752,7 +1200,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
   // ---------- export ----------
   const TITLE_BAND = 280;
-  function renderPage(y, m, ws, strokes, pxScale) {
+  function renderPage(y, m, ws, items, pxScale) {
     const c = document.createElement("canvas");
     c.width = Math.round(VW * pxScale); c.height = Math.round((VH + TITLE_BAND) * pxScale);
     const ctx = c.getContext("2d"); const pal = PAL.light; const names = NAMES[prefs.lang] || NAMES.en;
@@ -765,7 +1213,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     ctx.fillStyle = pal.muted; ctx.font = `400 150px ${DISPLAY}`; ctx.fillText(" " + y, 10 + w, 190);
     ctx.translate(0, TITLE_BAND);
     drawGrid(ctx, pal, y, m, ws);
-    for (const s of strokes) drawStroke(ctx, pal, s);
+    for (const it of items) drawItem(ctx, pal, it);
     return c;
   }
   function loadJsPDF() {
@@ -786,7 +1234,14 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     if (h > ph - mgn * 2) { h = ph - mgn * 2; w = h * ar; }
     doc.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", (pw - w) / 2, (ph - h) / 2, w, h);
   }
+  const blobToBase64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(blob); });
   async function offer(filename, blob) {
+    // Inside the Android app, hand the file to the app so it lands in Downloads.
+    if (window.InkAndroid && typeof window.InkAndroid.saveFile === "function") {
+      const ok = window.InkAndroid.saveFile(filename, blob.type || "application/octet-stream", await blobToBase64(blob));
+      toast(ok ? `Saved ${filename} to Downloads.` : `Couldn't save ${filename}.`);
+      return;
+    }
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
@@ -798,14 +1253,30 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     try { await fn(); } catch (e) { toast("Export failed. Try again."); }
     finally { btn.disabled = false; closePops(); }
   }
+  $("exPng").onclick = () => busy($("exPng"), async () => {
+    const c = renderPage(month.y, month.m, month.ws, month.items, 1);
+    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+    await offer(`calendar-${month.key}.png`, blob);
+  });
+  $("exPdf").onclick = () => busy($("exPdf"), async () => {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    addPdfPage(doc, renderPage(month.y, month.m, month.ws, month.items, 1), true);
+    await offer(`calendar-${month.key}.pdf`, doc.output("blob"));
+  });
+  $("exYear").onclick = () => busy($("exYear"), async () => {
+    const { jsPDF } = await loadJsPDF();
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    for (let m = 0; m < 12; m++) addPdfPage(doc, renderPage(month.y, m, prefs.weekStart, [], 0.8), m === 0);
+    await offer(`planner-${month.y}.pdf`, doc.output("blob"));
+  });
 
   // ---------- backup / restore ----------
   $("backup").onclick = () => busy($("backup"), async () => {
-    flush();
+    commitText(); flush();
     await Promise.all([...chains.values()]);
     const months = store.kind === "idb" ? await idbAll() : { ...memStore };
-    const n = Object.keys(months).length;
-    if (!n) { toast("Nothing to back up yet. Write something first."); return; }
+    if (!Object.keys(months).length) { toast("Nothing to back up yet. Write something first."); return; }
     const data = JSON.stringify({ app: "ink-calendar", v: 1, exported: new Date().toISOString(), months });
     const d = new Date();
     await offer(`ink-calendar-backup-${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}.json`, new Blob([data], { type: "application/json" }));
@@ -832,7 +1303,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     if (!pendingRestore) return;
     const { months, keys } = pendingRestore; pendingRestore = null;
     $("restoreConfirm").hidden = true; closePops();
-    flush(); await Promise.all([...chains.values()]);
+    commitText(); flush(); await Promise.all([...chains.values()]);
     try {
       if (store.kind === "idb") await idbTx("readwrite", (st) => { for (const k of keys) st.put(months[k], k); });
       else for (const k of keys) memStore[k] = months[k];
@@ -840,40 +1311,24 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
       goto(month.y, month.m);
     } catch (e) { toast("Couldn't restore. Free some storage space and try again."); }
   };
-  $("exPng").onclick = () => busy($("exPng"), async () => {
-    const c = renderPage(month.y, month.m, month.ws, month.strokes, 1);
-    const blob = await new Promise((r) => c.toBlob(r, "image/png"));
-    await offer(`calendar-${month.key}.png`, blob);
-  });
-  $("exPdf").onclick = () => busy($("exPdf"), async () => {
-    const { jsPDF } = await loadJsPDF();
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    addPdfPage(doc, renderPage(month.y, month.m, month.ws, month.strokes, 1), true);
-    await offer(`calendar-${month.key}.pdf`, doc.output("blob"));
-  });
-  $("exYear").onclick = () => busy($("exYear"), async () => {
-    const { jsPDF } = await loadJsPDF();
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    for (let m = 0; m < 12; m++) addPdfPage(doc, renderPage(month.y, m, prefs.weekStart, [], 0.8), m === 0);
-    await offer(`planner-${month.y}.pdf`, doc.output("blob"));
-  });
 
   // ---------- lifecycle ----------
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { commitText(); flush(); } });
   window.addEventListener("pagehide", flush);
   new ResizeObserver(() => fit()).observe($("boardWrap"));
   window.addEventListener("resize", fit);
 
-  renderTools(); renderPenOnly();
+  renderToolBtns(); renderQuick(); renderPenOnly();
   goto(today.getFullYear(), today.getMonth());
   fit();
   if (document.fonts && document.fonts.load) {
-    Promise.all([document.fonts.load(`700 52px ${DISPLAY}`), document.fonts.load(`800 40px ${DISPLAY}`)]).then(() => renderBase(), () => {});
+    Promise.all([document.fonts.load(`700 52px ${DISPLAY}`), document.fonts.load(`800 40px ${DISPLAY}`), document.fonts.load(`500 48px ${BODY}`), document.fonts.load(`700 48px ${BODY}`)])
+      .then(() => { for (const it of month.items) if (it.k === "t") textBox(it); renderBase(); }, () => {});
   }
   storeReady.then(updateStatus);
 
-  // offline support: cache the app the first time it loads
-  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  // offline support: cache the app the first time it loads (not needed inside the Android app)
+  if ("serviceWorker" in navigator && !window.InkAndroid && (location.protocol === "https:" || location.hostname === "localhost")) {
     window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   }
 })();
