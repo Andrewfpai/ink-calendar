@@ -114,6 +114,19 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 .selbar svg { width: 17px; height: 17px; }
 .selbar .del { color: var(--danger); }
 
+/* Plan tabs */
+.tabsbar { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+.tabwrap { position: relative; flex: none; }
+.tab { height: 38px; padding-inline: 14px; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; font-size: 14px; white-space: nowrap; max-width: 220px; }
+.tab span { overflow: hidden; text-overflow: ellipsis; }
+.tab[aria-selected="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.tab i { width: 12px; height: 12px; border-radius: 50%; flex: none; border: 1px solid var(--line); }
+.tab i.light { background: #ffffff; }
+.tab i.dark { background: #1b1f29; }
+.tab.add { color: var(--muted); border-style: dashed; background: transparent; }
+.tabpop { position: fixed; z-index: 30; }
+.tabpop input[type="text"] { width: 100%; height: 40px; padding-inline: 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; }
+
 .textedit { position: absolute; z-index: 4; margin: 0; padding: 0 2px; border: 1.5px dashed var(--accent); border-radius: 4px; background: transparent; outline: none; resize: none; overflow: hidden; white-space: pre; line-height: 1.25; font-family: var(--font-body); user-select: text; -webkit-user-select: text; touch-action: auto; }
 
 /* Popovers */
@@ -163,6 +176,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     <button class="pill" id="today">Today</button>
     <div class="spacer"></div>
     <span class="status" id="status" data-s="connecting"><i></i><span id="statusText">Opening…</span></span>
+    <button class="iconbtn" id="themeBtn" aria-label="Switch to light paper"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg></button>
     <div class="menuwrap">
       <button class="btn" id="exportBtn" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14"/></svg><span class="lbl">Export</span></button>
       <div class="pop" id="exportPop" hidden>
@@ -189,7 +203,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
         <div class="row"><span>Day names</span><div class="seg" id="segLang"><button data-v="en">English</button><button data-v="id">Indonesia</button></div></div>
         <div class="row"><span>Writing lines in days</span><div class="seg" id="segLines"><button data-v="0">Off</button><button data-v="1">On</button></div></div>
         <div class="row"><span>Days from next/last month</span><div class="seg" id="segOthers"><button data-v="0">Hide</button><button data-v="1">Show</button></div></div>
-        <p class="note">A month you have already written in keeps its layout, so your notes stay in the right day.</p>
+        <div class="row"><span>Calendar size</span><div class="seg" id="segSize"><button data-v="fit">Fit screen</button><button data-v="fill">Fill width</button></div></div>
+        <p class="note">Empty calendars stretch to your screen's shape. Once you write in one, its shape and layout stay fixed so your notes stay in the right day. Fill width makes it bigger; scroll down for the rest.</p>
       </div>
     </div>
   </header>
@@ -212,14 +227,26 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     <div class="spacer"></div>
     <button class="toggle" id="penOnly" aria-pressed="false" title="When on, only the stylus writes. Fingers scroll the page and your palm is ignored."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18z"/><path d="M2 2l7.6 7.6"/><circle cx="11" cy="11" r="2"/></svg>Pen only</button>
     <div class="menuwrap">
-      <button class="toggle danger-text" id="clearBtn" aria-haspopup="true" aria-expanded="false">Clear month</button>
+      <button class="toggle danger-text" id="clearBtn" aria-haspopup="true" aria-expanded="false">Clear page</button>
       <div class="pop" id="clearPop" hidden>
-        <h3 id="clearTitle">Clear all writing in October?</h3>
-        <p class="note">The dates stay. You can bring the writing back with Undo until you leave this month.</p>
-        <div class="confirm"><button class="btn" id="clearNo">Keep it</button><button class="btn red" id="clearYes">Clear month</button></div>
+        <h3 id="clearTitle">Clear all writing in this plan?</h3>
+        <p class="note">The dates stay, and your other plans aren't touched. You can bring the writing back with Undo until you leave this plan.</p>
+        <div class="confirm"><button class="btn" id="clearNo">Keep it</button><button class="btn red" id="clearYes">Clear page</button></div>
       </div>
     </div>
     <div class="pop toolpop" id="toolPop" hidden></div>
+  </div>
+
+  <div class="tabsbar" id="tabs" role="tablist" aria-label="Plans for this month"></div>
+  <div class="pop tabpop" id="tabPop" hidden>
+    <h3>Plan</h3>
+    <input type="text" id="tabName" maxlength="40" aria-label="Plan name">
+    <button class="btn" id="tabRename">Save name</button>
+    <button class="toggle danger-text" id="tabDelete">Delete this plan</button>
+    <div id="tabDelConfirm" hidden>
+      <p class="note" id="tabDelText">Delete this plan and everything written in it? This can't be undone.</p>
+      <div class="confirm"><button class="btn" id="tabDelNo">Keep it</button><button class="btn red" id="tabDelYes">Delete plan</button></div>
+    </div>
   </div>
 
   <div class="boardwrap" id="boardWrap">
@@ -234,7 +261,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
       <span class="loading" id="loading">Loading your writing…</span>
     </div>
   </div>
-  <p class="hint" id="hint">Tap a tool again to change its size and colour. With Pen only on, scroll with your finger to reach the notes below the calendar.</p>
+  <p class="hint" id="hint">Tap a tool again to change its size and colour. Tap the open plan's tab to rename it. With Pen only on, scroll with your finger to reach the notes.</p>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -243,7 +270,9 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   "use strict";
   // ---------- constants ----------
   // Virtual page: ink is stored in these units. The calendar fills 0..VH_CAL, the notes area sits below it.
-  const VW = 3200, VH_CAL = 2160, NOTES_H = 860, VH = VH_CAL + NOTES_H, HEAD = 120, NOTES_ROW = 9;
+  // Page width (VW) belongs to each plan: an empty plan stretches to the screen, a written one keeps its width.
+  let VW = 3200;
+  const LEGACY_VW = 3200, VH_CAL = 2160, NOTES_H = 860, VH = VH_CAL + NOTES_H, HEAD = 120, NOTES_ROW = 9;
   const DISPLAY = '"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif';
   const BODY = '"Figtree", "Segoe UI", system-ui, sans-serif';
   const NAMES = {
@@ -276,13 +305,14 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   // ---------- prefs (per-device) ----------
   const defaults = {
     weekStart: 0, lang: (navigator.language || "").toLowerCase().startsWith("id") ? "id" : "en",
-    lines: false, others: true, penOnly: null, tool: "pen",
+    lines: false, others: true, penOnly: null, tool: "pen", size: "fit", theme: null,
     pen: { type: "f", size: 3, opacity: 100, color: "auto" },
     hl: { size: 15, opacity: 40, color: "#ffd200", straight: false },
     eraser: { mode: "stroke", size: 3 },
     text: { size: 16, color: "auto", bold: false },
-    recent: { pen: ["auto", "#2449d8", "#d02f3b"], hl: ["#ffd200", "#ff5aa0", "#28d782"], text: ["auto", "#2449d8", "#d02f3b"] },
+    recent: { pen: ["auto", "#2449d8", "#d02f3b", "#1f8a4c", "#f97316"], hl: ["#ffd200", "#ff5aa0", "#28d782", "#4cc9f0", "#ff9f1c"], text: ["auto", "#2449d8", "#d02f3b", "#1f8a4c", "#f97316"] },
   };
+  const QUICK = 5;
   const prefs = JSON.parse(JSON.stringify(defaults));
   try {
     const saved = JSON.parse(localStorage.getItem("inkcal:prefs") || "{}");
@@ -292,6 +322,12 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     }
   } catch (e) {}
   if (!["pen", "hl", "eraser", "lasso", "text"].includes(prefs.tool)) prefs.tool = "pen";
+  // older versions kept 3 recent colours; top them up to 5
+  for (const k of ["pen", "hl", "text"]) {
+    const rec = Array.isArray(prefs.recent[k]) ? prefs.recent[k] : [];
+    for (const c of defaults.recent[k]) if (rec.length < QUICK && !rec.includes(c)) rec.push(c);
+    prefs.recent[k] = rec.slice(0, QUICK);
+  }
   function savePrefs() { try { localStorage.setItem("inkcal:prefs", JSON.stringify(prefs)); } catch (e) {} }
 
   // size sliders -> virtual units
@@ -300,17 +336,24 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   const eraserR = (v) => 12 + v * 10;
   const textPx = (v) => v * 3;
 
-  // ---------- theme ----------
+  // ---------- theme: each plan has light or dark paper, and the whole app follows the open plan ----------
   const mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
-  function isDark() {
-    const t = document.documentElement.getAttribute("data-theme");
-    if (t === "dark") return true;
-    if (t === "light") return false;
-    return !!(mq && mq.matches);
+  const systemTheme = () => (mq && mq.matches ? "dark" : "light");
+  const isDark = () => document.documentElement.getAttribute("data-theme") === "dark";
+  let P = PAL.light;
+  const ICON_SUN = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>';
+  const ICON_MOON = '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>';
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme === "dark" ? "dark" : "light");
   }
-  let P = isDark() ? PAL.dark : PAL.light;
-  function onTheme() { P = isDark() ? PAL.dark : PAL.light; renderQuick(); if (!$("toolPop").hidden) buildToolPop(); renderBase(); drawOverlay(); }
-  if (mq && mq.addEventListener) mq.addEventListener("change", onTheme);
+  function onTheme() {
+    P = isDark() ? PAL.dark : PAL.light;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", isDark() ? "#11141a" : "#eceef2"));
+    $("themeIcon").innerHTML = isDark() ? ICON_SUN : ICON_MOON;
+    $("themeBtn").setAttribute("aria-label", isDark() ? "Switch to light paper" : "Switch to dark paper");
+    $("themeBtn").title = isDark() ? "Light paper" : "Dark paper";
+    renderQuick(); if (!$("toolPop").hidden) buildToolPop(); renderBase(); drawOverlay(); placeTextEditor();
+  }
   new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   function colorOf(pal, c) { if (c === "auto") return pal.autoInk; if (LEGACY[c]) return c === "ink" ? pal.autoInk : LEGACY[c]; return c; }
@@ -613,38 +656,79 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   const hidden = new Set(); // items not drawn on the page right now (being moved or edited)
 
   function keyOf(y, m) { return `${y}-${pad2(m + 1)}`; }
+  // The first plan keeps the original storage key, so writing from before plans existed still loads.
+  const dataKeyOf = (key, tabId) => (tabId === "main" ? key : `${key}~${tabId}`);
   function markDirty(r) { dirty.add(r); clearTimeout(saveTimer); saveTimer = setTimeout(flush, 1200); updateStatus(); }
-  function dirtyAgain(key, r) { if (month && month.key === key) { dirty.add(r); updateStatus(); } }
+  function dirtyAgain(key, r) { if (month && month.dataKey === key) { dirty.add(r); updateStatus(); } }
   function flush() {
     clearTimeout(saveTimer);
     if (!month || !month.loaded || !dirty.size) return;
     const rows = [...dirty]; dirty.clear();
-    for (const r of rows) queueWrite(month.key, month.ws, r, month.items.filter((s) => s.r === r).map(enc));
+    for (const r of rows) queueWrite(month.dataKey, month.ws, r, month.items.filter((s) => s.r === r).map(enc));
   }
 
-  function goto(y, m) {
-    commitText(); clearSel();
+  // ---------- plans (tabs) ----------
+  // Stored at "tabs:YYYY-MM" as [{id, name, theme, vw}]; vw is null while a plan is empty (it follows the screen).
+  async function readTabs(key) {
+    const saved = store.kind === "idb" ? await idbGet("tabs:" + key) : memStore["tabs:" + key];
+    if (Array.isArray(saved) && saved.length) return saved;
+    // no plan list yet: one plan, sized the way older versions drew it if it already has writing
+    const legacy = store.kind === "idb" ? await idbGet(key) : memStore[key];
+    return [{ id: "main", name: "Plan 1", theme: prefs.theme || systemTheme(), vw: legacy ? LEGACY_VW : null }];
+  }
+  function saveTabs() {
+    const key = "tabs:" + month.key, list = month.tabs.map((t) => ({ ...t }));
+    const p = (chains.get(key) || Promise.resolve()).then(() => {
+      if (store.kind === "idb") return idbTx("readwrite", (st) => { st.put(list, key); });
+      memStore[key] = list;
+    }).catch(() => toast("Couldn't save your plan list. Free some storage space and try again."));
+    chains.set(key, p);
+  }
+
+  function goto(y, m, tabId) {
+    commitText(); clearSel(); closePops();
     flush();
     if (m < 0) { y--; m = 11; } if (m > 11) { y++; m = 0; }
-    month = { y, m, key: keyOf(y, m), ws: prefs.weekStart, items: [], loaded: false };
+    month = { y, m, key: keyOf(y, m), tabs: [], tab: null, dataKey: null, ws: prefs.weekStart, items: [], loaded: false };
     undoStack = []; redoStack = []; dirty = new Set();
-    renderTitle(); updateUndo(); renderBase();
-    loadCurrent();
+    renderTitle(); updateUndo(); renderTabs(); renderBase();
+    loadCurrent(tabId);
   }
-  async function loadCurrent() {
+  async function loadCurrent(tabId) {
     const tok = ++loadToken, mo = month;
     $("loading").hidden = false;
     await storeReady; updateStatus();
+    try { mo.tabs = await readTabs(mo.key); }
+    catch (e) { mo.tabs = [{ id: "main", name: "Plan 1", theme: prefs.theme || systemTheme(), vw: null }]; }
+    if (tok !== loadToken || mo !== month) return;
+    await openTab(mo.tabs.find((t) => t.id === tabId) || mo.tabs[0]);
+  }
+  async function openTab(tab) {
+    commitText(); clearSel(); flush();
+    const tok = ++loadToken, mo = month;
+    mo.tab = tab; mo.dataKey = dataKeyOf(mo.key, tab.id);
+    mo.items = []; mo.loaded = false; mo.ws = prefs.weekStart;
+    undoStack = []; redoStack = []; dirty = new Set(); updateUndo();
+    applyTheme(tab.theme); renderTabs();
+    $("loading").hidden = false;
     let data;
-    try { data = await loadMonthData(mo.key); }
-    catch (e) { data = { ws: null, items: [] }; toast("Couldn't load this month's writing. Reopen the month to try again."); }
+    try { data = await loadMonthData(mo.dataKey); }
+    catch (e) { data = { ws: null, items: [] }; toast("Couldn't load this plan's writing. Reopen the month to try again."); }
     if (tok !== loadToken || mo !== month) return;
     if (data.items.length && (data.ws === 0 || data.ws === 1)) mo.ws = data.ws;
-    mo.items = data.items.concat(mo.items);
+    if (data.items.length && !tab.vw) { tab.vw = LEGACY_VW; saveTabs(); }
+    mo.items = data.items;
     mo.loaded = true;
     $("loading").hidden = true;
-    renderBase();
-    if (dirty.size) markDirty([...dirty][0]);
+    fit();
+  }
+  function newTab(theme) {
+    const n = month.tabs.length + 1;
+    let name = `Plan ${n}`;
+    for (let i = n; month.tabs.some((t) => t.name === name); i++) name = `Plan ${i + 1}`;
+    const tab = { id: "t" + Date.now().toString(36), name, theme, vw: null };
+    month.tabs.push(tab); saveTabs();
+    return openTab(tab);
   }
 
   // ---------- canvases ----------
@@ -657,8 +741,13 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     const availW = wrap.clientWidth;
     const top = wrap.getBoundingClientRect().top + window.scrollY;
     const availH = Math.max(280, window.innerHeight - top - 24);
-    // the calendar part fits the screen; the notes area continues below it
-    let w = availW < 720 ? availW : Math.min(availW, availH * VW / VH_CAL);
+    const phone = availW < 720;
+    // An empty plan takes the screen's shape; a written plan keeps the width its ink was written at.
+    const tab = month && month.tab;
+    if (tab && tab.vw) VW = tab.vw;
+    else VW = phone ? LEGACY_VW : clamp(Math.round(availW / availH * VH_CAL / 10) * 10, 2400, 6400);
+    // the calendar part fits the screen (or fills the width); the notes area continues below it
+    let w = phone || prefs.size === "fill" ? availW : Math.min(availW, availH * VW / VH_CAL);
     w = Math.floor(w); const h = Math.round(w * VH / VW);
     board.style.width = w + "px"; board.style.height = h + "px";
     const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -681,6 +770,8 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   function swap(remove, add) {
     if (remove.length) { const set = new Set(remove); month.items = month.items.filter((it) => !set.has(it)); }
     month.items.push(...add);
+    // the first ink fixes this plan's page width
+    if (add.length && month.tab && !month.tab.vw) { month.tab.vw = VW; saveTabs(); }
     for (const it of remove) markDirty(it.r);
     for (const it of add) markDirty(it.r);
   }
@@ -816,7 +907,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   }
 
   live.addEventListener("pointerdown", (e) => {
-    if (!month) return;
+    if (!month || !month.loaded) return;
     if (e.pointerType === "pen" && !penSeen) {
       penSeen = true;
       if (prefs.penOnly === null) { prefs.penOnly = true; savePrefs(); renderPenOnly(); toast("Stylus detected. Pen only is on: your palm won't leave marks and a finger scrolls."); }
@@ -1002,7 +1093,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   function pickColor(c) {
     const k = colorKey(); if (!k) return;
     prefs[k].color = c;
-    const rec = prefs.recent[k].filter((x) => x !== c); rec.unshift(c); prefs.recent[k] = rec.slice(0, 3);
+    const rec = prefs.recent[k].filter((x) => x !== c); rec.unshift(c); prefs.recent[k] = rec.slice(0, QUICK);
     if (editing && k === "text") { editing.c = c; placeTextEditor(); }
     savePrefs(); renderQuick(); if (!$("toolPop").hidden) buildToolPop();
   }
@@ -1012,7 +1103,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     $("quickSep").hidden = !k; q.hidden = !k;
     if (!k) return;
     let rec = prefs.recent[k];
-    if (!rec.includes(prefs[k].color)) rec = [prefs[k].color, ...rec].slice(0, 3);
+    if (!rec.includes(prefs[k].color)) rec = [prefs[k].color, ...rec].slice(0, QUICK);
     for (const c of rec) q.appendChild(swatch(c, prefs[k].color === c, pickColor, k === "hl"));
   }
 
@@ -1131,6 +1222,86 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   }
   $("toolPop").addEventListener("pointerdown", (e) => e.stopPropagation());
 
+  // ---------- plan tabs UI ----------
+  function renderTabs() {
+    const bar = $("tabs"); bar.innerHTML = "";
+    if (!month) return;
+    for (const t of month.tabs) {
+      const b = document.createElement("button");
+      b.className = "tab"; b.setAttribute("role", "tab");
+      const on = month.tab && month.tab.id === t.id;
+      b.setAttribute("aria-selected", String(!!on));
+      b.title = on ? "Tap again to rename or delete" : t.name;
+      const dot = document.createElement("i"); dot.className = t.theme === "dark" ? "dark" : "light";
+      const label = document.createElement("span"); label.textContent = t.name;
+      b.append(dot, label);
+      b.onclick = (e) => {
+        e.stopPropagation();
+        if (on) { openTabPop(b); return; }
+        closePops(); openTab(t);
+      };
+      bar.appendChild(b);
+    }
+    const add = document.createElement("button");
+    add.className = "tab add"; add.textContent = "+ New plan";
+    add.setAttribute("aria-label", "New plan for this month");
+    add.onclick = (e) => { e.stopPropagation(); closePops(); newTab(month.tab ? month.tab.theme : (prefs.theme || systemTheme())); };
+    bar.appendChild(add);
+    const cur = bar.querySelector('[aria-selected="true"]');
+    if (cur) cur.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
+  function openTabPop(anchor) {
+    closePops();
+    const pop = $("tabPop"), r = anchor.getBoundingClientRect();
+    $("tabName").value = month.tab.name;
+    $("tabDelete").hidden = month.tabs.length < 2;
+    $("tabDelConfirm").hidden = true;
+    pop.hidden = false;
+    pop.style.left = clamp(r.left, 16, window.innerWidth - pop.offsetWidth - 16) + "px";
+    pop.style.top = r.bottom + 8 + "px";
+    $("tabName").focus(); $("tabName").select();
+  }
+  function renameTab() {
+    const name = $("tabName").value.trim().slice(0, 40);
+    if (name && name !== month.tab.name) { month.tab.name = name; saveTabs(); renderTabs(); }
+    $("tabPop").hidden = true;
+  }
+  $("tabRename").onclick = renameTab;
+  $("tabName").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); renameTab(); } if (e.key === "Escape") $("tabPop").hidden = true; });
+  $("tabDelete").onclick = () => {
+    $("tabDelText").textContent = `Delete "${month.tab.name}" and everything written in it? This can't be undone. Your other plans stay.`;
+    $("tabDelConfirm").hidden = false;
+  };
+  $("tabDelNo").onclick = () => { $("tabDelConfirm").hidden = true; };
+  $("tabDelYes").onclick = async () => {
+    $("tabPop").hidden = true;
+    const gone = month.tab, key = month.dataKey;
+    commitText(); clearSel(); clearTimeout(saveTimer); dirty = new Set();
+    await Promise.all([...chains.values()]);
+    try {
+      if (store.kind === "idb") await idbTx("readwrite", (st) => { st.delete(key); }); else delete memStore[key];
+    } catch (e) { toast("Couldn't delete that plan. Try again."); return; }
+    month.tabs = month.tabs.filter((t) => t !== gone); saveTabs();
+    toast(`Deleted "${gone.name}".`);
+    openTab(month.tabs[0]);
+  };
+  $("tabPop").addEventListener("pointerdown", (e) => e.stopPropagation());
+
+  // light / dark paper
+  $("themeBtn").onclick = () => {
+    if (!month || !month.tab) return;
+    const next = isDark() ? "light" : "dark";
+    prefs.theme = next; savePrefs();
+    commitText();
+    if (!month.items.length) {
+      month.tab.theme = next; saveTabs(); applyTheme(next); renderTabs();
+      return;
+    }
+    // ink chosen for one paper can vanish on the other, so a written plan keeps its paper
+    const oldName = month.tab.name;
+    newTab(next).then(() => toast(`"${oldName}" has writing, so it keeps its paper. Opened a new ${next} plan next to it.`));
+  };
+
   function renderPenOnly() { $("penOnly").setAttribute("aria-pressed", String(!!prefs.penOnly)); }
   $("penOnly").onclick = () => { prefs.penOnly = !prefs.penOnly; savePrefs(); renderPenOnly(); toast(prefs.penOnly ? "Pen only is on. A finger scrolls; it doesn't draw." : "Pen only is off. Fingers and mouse can draw too."); };
 
@@ -1147,13 +1318,14 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
   // header popovers
   const pops = [["exportBtn", "exportPop"], ["setBtn", "setPop"], ["clearBtn", "clearPop"]];
-  function closePops() { for (const [b, p] of pops) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); } closeToolPop(); }
+  function closePops() { for (const [b, p] of pops) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); } closeToolPop(); $("tabPop").hidden = true; }
   for (const [b, p] of pops) {
     $(b).onclick = (e) => { e.stopPropagation(); const open = $(p).hidden; closePops(); if (open) { $(p).hidden = false; $(b).setAttribute("aria-expanded", "true"); if (p === "setPop") renderSettings(); if (p === "exportPop") $("restoreConfirm").hidden = true; } };
   }
   document.addEventListener("pointerdown", (e) => {
     for (const [b, p] of pops) if (!$(p).hidden && !$(p).contains(e.target) && !$(b).contains(e.target)) { $(p).hidden = true; $(b).setAttribute("aria-expanded", "false"); }
     if (!$("toolPop").hidden && !$("toolPop").contains(e.target) && !toolBtns.some((b) => b.contains(e.target))) closeToolPop();
+    if (!$("tabPop").hidden && !$("tabPop").contains(e.target) && !$("tabs").contains(e.target)) $("tabPop").hidden = true;
   });
 
   function bindSeg(id, get, set) {
@@ -1170,6 +1342,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     bindSeg("segLang", () => prefs.lang, (v) => { prefs.lang = v; renderTitle(); renderBase(); }),
     bindSeg("segLines", () => (prefs.lines ? 1 : 0), (v) => { prefs.lines = v === "1"; renderBase(); }),
     bindSeg("segOthers", () => (prefs.others ? 1 : 0), (v) => { prefs.others = v === "1"; renderBase(); }),
+    bindSeg("segSize", () => prefs.size, (v) => { prefs.size = v; fit(); }),
   ];
   function renderSettings() { segRenders.forEach((f) => f()); }
 
@@ -1185,7 +1358,6 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     const names = NAMES[prefs.lang] || NAMES.en;
     const t = $("title"); t.textContent = names.months[month.m];
     const yr = document.createElement("span"); yr.className = "yr"; yr.textContent = month.y; t.appendChild(yr);
-    $("clearTitle").textContent = `Clear all writing in ${names.months[month.m]}?`;
     $("exYearTitle").textContent = `Blank ${month.y} planner (PDF)`;
   }
   $("prev").onclick = () => goto(month.y, month.m - 1);
@@ -1200,10 +1372,10 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
 
   // ---------- export ----------
   const TITLE_BAND = 280;
-  function renderPage(y, m, ws, items, pxScale) {
+  function renderPage(y, m, ws, items, pxScale, pal = PAL.light) {
     const c = document.createElement("canvas");
     c.width = Math.round(VW * pxScale); c.height = Math.round((VH + TITLE_BAND) * pxScale);
-    const ctx = c.getContext("2d"); const pal = PAL.light; const names = NAMES[prefs.lang] || NAMES.en;
+    const ctx = c.getContext("2d"); const names = NAMES[prefs.lang] || NAMES.en;
     ctx.setTransform(pxScale, 0, 0, pxScale, 0, 0);
     ctx.fillStyle = pal.paper; ctx.fillRect(0, 0, VW, VH + TITLE_BAND);
     ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
@@ -1254,15 +1426,15 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     finally { btn.disabled = false; closePops(); }
   }
   $("exPng").onclick = () => busy($("exPng"), async () => {
-    const c = renderPage(month.y, month.m, month.ws, month.items, 1);
+    const c = renderPage(month.y, month.m, month.ws, month.items, 1, P);
     const blob = await new Promise((r) => c.toBlob(r, "image/png"));
-    await offer(`calendar-${month.key}.png`, blob);
+    await offer(`calendar-${month.key}${month.tab.id === "main" ? "" : "-" + month.tab.name.replace(/[^\w-]+/g, "-")}.png`, blob);
   });
   $("exPdf").onclick = () => busy($("exPdf"), async () => {
     const { jsPDF } = await loadJsPDF();
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    addPdfPage(doc, renderPage(month.y, month.m, month.ws, month.items, 1), true);
-    await offer(`calendar-${month.key}.pdf`, doc.output("blob"));
+    addPdfPage(doc, renderPage(month.y, month.m, month.ws, month.items, 1, P), true);
+    await offer(`calendar-${month.key}${month.tab.id === "main" ? "" : "-" + month.tab.name.replace(/[^\w-]+/g, "-")}.pdf`, doc.output("blob"));
   });
   $("exYear").onclick = () => busy($("exYear"), async () => {
     const { jsPDF } = await loadJsPDF();
@@ -1288,12 +1460,14 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
     try {
       const obj = JSON.parse(await f.text());
       if (!obj || obj.app !== "ink-calendar" || typeof obj.months !== "object") throw new Error("bad");
-      const keys = Object.keys(obj.months).filter((k) => /^\d{4}-\d{2}$/.test(k)).sort();
-      if (!keys.length) throw new Error("empty");
-      pendingRestore = { months: obj.months, keys };
+      const keys = Object.keys(obj.months).filter((k) => /^(tabs:)?\d{4}-\d{2}(~[\w-]+)?$/.test(k)).sort();
+      const monthKeys = [...new Set(keys.map((k) => k.replace(/^tabs:/, "").slice(0, 7)))].sort();
+      if (!monthKeys.length) throw new Error("empty");
+      pendingRestore = { months: obj.months, keys, count: monthKeys.length };
       const names = NAMES.en.months;
-      const label = (k) => `${names[Number(k.slice(5)) - 1]} ${k.slice(0, 4)}`;
-      $("restoreText").textContent = `This backup has ${keys.length} month${keys.length > 1 ? "s" : ""} (${label(keys[0])}${keys.length > 1 ? " to " + label(keys[keys.length - 1]) : ""}). Restoring replaces your writing in those months. Other months stay as they are.`;
+      const label = (k) => `${names[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}`;
+      const n = monthKeys.length;
+      $("restoreText").textContent = `This backup has ${n} month${n > 1 ? "s" : ""} (${label(monthKeys[0])}${n > 1 ? " to " + label(monthKeys[n - 1]) : ""}). Restoring replaces your plans in those months. Other months stay as they are.`;
       $("restoreConfirm").hidden = false;
       $("exportPop").hidden = false; $("exportBtn").setAttribute("aria-expanded", "true");
     } catch (e) { toast("That file isn't an Ink Calendar backup."); }
@@ -1301,13 +1475,13 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   $("restoreNo").onclick = () => { pendingRestore = null; $("restoreConfirm").hidden = true; };
   $("restoreYes").onclick = async () => {
     if (!pendingRestore) return;
-    const { months, keys } = pendingRestore; pendingRestore = null;
+    const { months, keys, count } = pendingRestore; pendingRestore = null;
     $("restoreConfirm").hidden = true; closePops();
     commitText(); flush(); await Promise.all([...chains.values()]);
     try {
       if (store.kind === "idb") await idbTx("readwrite", (st) => { for (const k of keys) st.put(months[k], k); });
       else for (const k of keys) memStore[k] = months[k];
-      toast(`Restored ${keys.length} month${keys.length > 1 ? "s" : ""}.`);
+      toast(`Restored ${count} month${count > 1 ? "s" : ""}.`);
       goto(month.y, month.m);
     } catch (e) { toast("Couldn't restore. Free some storage space and try again."); }
   };
@@ -1318,6 +1492,7 @@ button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px s
   new ResizeObserver(() => fit()).observe($("boardWrap"));
   window.addEventListener("resize", fit);
 
+  applyTheme(prefs.theme || systemTheme()); onTheme();
   renderToolBtns(); renderQuick(); renderPenOnly();
   goto(today.getFullYear(), today.getMonth());
   fit();
